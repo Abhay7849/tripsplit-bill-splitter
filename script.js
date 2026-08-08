@@ -1,12 +1,21 @@
 /* ==========================================================================
-   TripSplit - Auth, Past Trips Sidebar History & WhatsApp Engine
+   TripSplit - Strict Account Authentication & History Engine
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------------------------
-    // 1. Initial State & Storage
+    // 1. Initial State & Registered Accounts Storage
     // ----------------------------------------------------------------------
     let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || null;
+    let registeredUsers = JSON.parse(localStorage.getItem('tripsplit_registered_users')) || [
+        {
+            name: 'Rahul Sharma',
+            email: 'rahul@gmail.com',
+            phone: '9811122334',
+            password: '123'
+        }
+    ];
+
     let trips = JSON.parse(localStorage.getItem('tripsplit_all_trips')) || [];
     let currentTrip = JSON.parse(localStorage.getItem('tripsplit_current_trip')) || null;
     let currentStep = 1;
@@ -34,6 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
     }
+
+    // Save registered users list
+    function saveUsers() {
+        localStorage.setItem('tripsplit_registered_users', JSON.stringify(registeredUsers));
+    }
+    saveUsers();
 
     // ----------------------------------------------------------------------
     // 2. DOM Elements
@@ -192,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ----------------------------------------------------------------------
-    // 5. STEP 1: Auth Tabs & Login / Signup
+    // 5. STRICT AUTHENTICATION (SIGNUP REQUIRED FIRST)
     // ----------------------------------------------------------------------
     tabLoginBtn.addEventListener('click', () => {
         tabLoginBtn.classList.add('active');
@@ -208,30 +223,60 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.style.display = 'none';
     });
 
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value.trim();
-
-        currentUser = {
-            name: email.split('@')[0].toUpperCase(),
-            email: email,
-            phone: '9811122334'
-        };
-
-        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        navigateToStep(currentTrip ? 3 : 2);
-    });
-
+    // SIGNUP HANDLER
     signupForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const name = document.getElementById('signupName').value.trim();
-        const email = document.getElementById('signupEmail').value.trim();
+        const email = document.getElementById('signupEmail').value.trim().toLowerCase();
         let phone = document.getElementById('signupPhone').value.trim().replace(/\D/g, '');
+        const password = document.getElementById('signupPassword').value;
+
         if (!phone.startsWith('91')) phone = '91' + phone;
 
-        currentUser = { name, email, phone };
+        // Check if email already registered
+        const existing = registeredUsers.find(u => u.email.toLowerCase() === email);
+        if (existing) {
+            alert('⚠️ Account with this email already exists! Please click "Login" tab.');
+            tabLoginBtn.click();
+            document.getElementById('loginEmail').value = email;
+            return;
+        }
+
+        const newUser = { name, email, phone, password };
+        registeredUsers.push(newUser);
+        saveUsers();
+
+        alert(`🎉 Account created successfully for ${name}!\n\nNow please click Login using Email: ${email} and your Password.`);
+        signupForm.reset();
+
+        // Switch to Login Tab
+        tabLoginBtn.click();
+        document.getElementById('loginEmail').value = email;
+    });
+
+    // STRICT LOGIN HANDLER
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        const password = document.getElementById('loginPassword').value;
+
+        // Verify against registered users
+        const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
+
+        if (!matchedUser) {
+            alert('❌ Account not found or Password incorrect!\n\nPlease check your credentials or click "Signup / Register" to create an account first.');
+            return;
+        }
+
+        currentUser = {
+            name: matchedUser.name,
+            email: matchedUser.email,
+            phone: matchedUser.phone
+        };
+
         localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        navigateToStep(2);
+        alert(`✅ Welcome back, ${matchedUser.name}!`);
+        navigateToStep(currentTrip ? 3 : 2);
     });
 
     // ----------------------------------------------------------------------
@@ -394,7 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentTrip.expenses.unshift(newExp);
 
-        // Update in all trips array
         const idx = trips.findIndex(t => t.id === currentTrip.id);
         if (idx >= 0) trips[idx] = currentTrip;
 
@@ -423,7 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
         calcTotalFriends.textContent = `${memberCount} Members`;
         calcPerHeadShare.textContent = `₹${Math.round(perHead)} / person`;
 
-        // Calculate Spent per Member
         const memberStats = currentTrip.members.map(m => {
             const spent = currentTrip.expenses
                 .filter(e => e.payerId === m.id)
@@ -435,7 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
 
-        // Render Spent Cards
         spentBreakdownGrid.innerHTML = memberStats.map(m => `
             <div class="spent-card">
                 <div class="spent-name">${m.name}</div>
@@ -448,7 +490,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Minimal Transfers
         let creditors = memberStats.filter(m => m.netBalance > 0.01).map(m => ({ ...m }));
         let debtors = memberStats.filter(m => m.netBalance < -0.01).map(m => ({ ...m, owes: Math.abs(m.netBalance) }));
 
@@ -475,7 +516,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Render WhatsApp Direct Cards
         if (transfers.length === 0) {
             transfersListGrid.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: #F0FDF4; border-radius: var(--radius-lg); border: 1px solid rgba(37,211,102,0.3);">
@@ -508,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------------------------
-    // 9. EXACT WHATSAPP MESSAGE FORMAT REQUIRED BY USER
+    // 9. DIRECT WHATSAPP MESSAGE FORMAT
     // ----------------------------------------------------------------------
     window.sendDirectWaMessage = function(debtorPhone, debtorName, creditorName, creditorPhone, amount) {
         let displayPhone = creditorPhone.replace(/^91/, '');
