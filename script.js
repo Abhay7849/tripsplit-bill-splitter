@@ -1,470 +1,436 @@
 /* ==========================================================================
-   TripSplit - Group Trip Expense Equalizer & WhatsApp Settlement Engine
+   TripSplit - Clean 4-Step Trip & WhatsApp Settlement Engine
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------------------------
-    // 1. Initial Sample Trip Data
+    // 1. Initial State & Storage
     // ----------------------------------------------------------------------
-    const defaultTrip = {
-        id: 'TRIP-9081',
-        title: 'Manali Trip 2026',
-        createdAt: '2026-08-08',
-        members: [
-            { id: 'm1', name: 'Rahul Sharma', phone: '919811122334', upiId: 'rahul@upi' },
-            { id: 'm2', name: 'Amit Patel', phone: '919822233445', upiId: '9822233445@upi' },
-            { id: 'm3', name: 'Priya Singh', phone: '919833344556', upiId: 'priya@upi' },
-            { id: 'm4', name: 'Vikram Kumar', phone: '919844455667', upiId: 'vikram@upi' }
-        ],
-        expenses: [
-            {
-                id: 'exp-1',
-                title: 'Hotel Stay (3 Nights Resort)',
-                amount: 2000,
-                payerId: 'm1', // Rahul
-                splitAmong: ['m1', 'm2', 'm3', 'm4'],
-                date: '2026-08-08'
-            },
-            {
-                id: 'exp-2',
-                title: 'Highway Fuel & Toll Taxes',
-                amount: 800,
-                payerId: 'm2', // Amit
-                splitAmong: ['m1', 'm2', 'm3', 'm4'],
-                date: '2026-08-08'
-            },
-            {
-                id: 'exp-3',
-                title: 'Dinner at Mall Road Restaurant',
-                amount: 1200,
-                payerId: 'm3', // Priya
-                splitAmong: ['m1', 'm2', 'm3', 'm4'],
-                date: '2026-08-08'
-            }
-        ]
-    };
+    let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || null;
+    let currentTrip = JSON.parse(localStorage.getItem('tripsplit_current_trip')) || null;
+    let currentStep = 1;
 
     // ----------------------------------------------------------------------
-    // 2. Application State & Local Storage Persistence
+    // 2. DOM Elements
     // ----------------------------------------------------------------------
-    let trips = JSON.parse(localStorage.getItem('tripsplit_trips')) || [defaultTrip];
-    let activeTripId = localStorage.getItem('tripsplit_active_id') || defaultTrip.id;
-    let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || { name: 'Rahul Sharma', phone: '9811122334' };
+    // Navigation & Indicators
+    const stepIndicators = [
+        document.getElementById('stepIndicator1'),
+        document.getElementById('stepIndicator2'),
+        document.getElementById('stepIndicator3'),
+        document.getElementById('stepIndicator4')
+    ];
 
-    function saveState() {
-        localStorage.setItem('tripsplit_trips', JSON.stringify(trips));
-        localStorage.setItem('tripsplit_active_id', activeTripId);
-        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        renderApp();
-    }
+    const pages = [
+        document.getElementById('pageStep1'),
+        document.getElementById('pageStep2'),
+        document.getElementById('pageStep3'),
+        document.getElementById('pageStep4')
+    ];
 
-    function getActiveTrip() {
-        return trips.find(t => t.id === activeTripId) || trips[0];
-    }
+    const userWidget = document.getElementById('userWidget');
+    const navUserName = document.getElementById('navUserName');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const navLogoBtn = document.getElementById('navLogoBtn');
 
-    // ----------------------------------------------------------------------
-    // 3. DOM Elements
-    // ----------------------------------------------------------------------
-    const tripsNavList = document.getElementById('tripsNavList');
-    const headerTripName = document.getElementById('headerTripName');
-    const statTotalExpense = document.getElementById('statTotalExpense');
-    const statPerHead = document.getElementById('statPerHead');
-    const statMemberCount = document.getElementById('statMemberCount');
-    const statOwedTransfers = document.getElementById('statOwedTransfers');
-    const countExpenses = document.getElementById('countExpenses');
+    // Step 1: Login
+    const loginForm = document.getElementById('loginForm');
 
-    const membersGrid = document.getElementById('membersGrid');
-    const settlementGrid = document.getElementById('settlementGrid');
-    const expensesList = document.getElementById('expensesList');
-
-    const userNameDisplay = document.getElementById('userNameDisplay');
-    const userPhoneDisplay = document.getElementById('userPhoneDisplay');
-
-    // Modals
-    const createTripModal = document.getElementById('createTripModal');
-    const openCreateTripBtn = document.getElementById('openCreateTripBtn');
-    const closeCreateTripModal = document.getElementById('closeCreateTripModal');
-    const cancelCreateTripModal = document.getElementById('cancelCreateTripModal');
+    // Step 2: Create Trip
     const createTripForm = document.getElementById('createTripForm');
-    const memberInputsContainer = document.getElementById('memberInputsContainer');
-    const addMemberRowBtn = document.getElementById('addMemberRowBtn');
+    const tripTitleInput = document.getElementById('tripTitle');
+    const membersListContainer = document.getElementById('membersListContainer');
+    const addFriendRowBtn = document.getElementById('addFriendRowBtn');
+    const loadSampleTripBtn = document.getElementById('loadSampleTripBtn');
 
-    const addExpenseModal = document.getElementById('addExpenseModal');
-    const openAddExpenseBtn = document.getElementById('openAddExpenseBtn');
-    const closeAddExpenseModal = document.getElementById('closeAddExpenseModal');
-    const cancelAddExpenseModal = document.getElementById('cancelAddExpenseModal');
-    const addExpenseForm = document.getElementById('addExpenseForm');
-    const expensePayer = document.getElementById('expensePayer');
-    const splitCheckboxContainer = document.getElementById('splitCheckboxContainer');
+    // Step 3: Expenses
+    const activeTripTitleDisplay = document.getElementById('activeTripTitleDisplay');
+    const expensesTableWrapper = document.getElementById('expensesTableWrapper');
+    const openAddExpenseModalBtn = document.getElementById('openAddExpenseModalBtn');
+    const gotoCalculateBtn = document.getElementById('gotoCalculateBtn');
 
-    const authModal = document.getElementById('authModal');
-    const openAuthModalBtn = document.getElementById('openAuthModalBtn');
-    const closeAuthModal = document.getElementById('closeAuthModal');
-    const cancelAuthModal = document.getElementById('cancelAuthModal');
-    const authForm = document.getElementById('authForm');
-    const openTripReportWaBtn = document.getElementById('openTripReportWaBtn');
+    // Step 4: Calculate & Settlement
+    const calcTotalExpense = document.getElementById('calcTotalExpense');
+    const calcTotalFriends = document.getElementById('calcTotalFriends');
+    const calcPerHeadShare = document.getElementById('calcPerHeadShare');
+    const spentBreakdownGrid = document.getElementById('spentBreakdownGrid');
+    const transfersListGrid = document.getElementById('transfersListGrid');
+    const backToExpensesBtn = document.getElementById('backToExpensesBtn');
+
+    // Modal: Add Expense
+    const expenseModal = document.getElementById('expenseModal');
+    const closeExpenseModal = document.getElementById('closeExpenseModal');
+    const cancelExpenseModal = document.getElementById('cancelExpenseModal');
+    const expenseForm = document.getElementById('expenseForm');
+    const expPayer = document.getElementById('expPayer');
 
     // ----------------------------------------------------------------------
-    // 4. Equalizer Math Engine (Calculates Minimal Settlement Transfers)
+    // 3. Navigation & Stepper Controller
     // ----------------------------------------------------------------------
-    function calculateEqualizer(trip) {
-        const totalExpense = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
-        const memberCount = trip.members.length;
-        const perHeadTarget = memberCount > 0 ? totalExpense / memberCount : 0;
+    function navigateToStep(stepNum) {
+        currentStep = stepNum;
 
-        // Calculate Total Spent per member
-        const memberStats = trip.members.map(m => {
-            const totalSpent = trip.expenses
+        // Hide all pages, show active
+        pages.forEach((p, idx) => {
+            if (idx + 1 === stepNum) p.classList.add('active');
+            else p.classList.remove('active');
+        });
+
+        // Update step indicator bar
+        stepIndicators.forEach((ind, idx) => {
+            if (idx + 1 === stepNum) ind.classList.add('active');
+            else ind.classList.remove('active');
+        });
+
+        // Navbar profile widget
+        if (currentUser) {
+            userWidget.style.display = 'flex';
+            navUserName.textContent = currentUser.name.split(' ')[0];
+        } else {
+            userWidget.style.display = 'none';
+        }
+
+        // Render Page Data based on Step
+        if (stepNum === 2) renderStep2();
+        if (stepNum === 3) renderStep3();
+        if (stepNum === 4) renderStep4();
+    }
+
+    navLogoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentUser) navigateToStep(currentTrip ? 3 : 2);
+        else navigateToStep(1);
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        currentUser = null;
+        currentTrip = null;
+        localStorage.removeItem('tripsplit_user');
+        localStorage.removeItem('tripsplit_current_trip');
+        navigateToStep(1);
+    });
+
+    // ----------------------------------------------------------------------
+    // 4. STEP 1: Login / Signup Handler
+    // ----------------------------------------------------------------------
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('userName').value.trim();
+        const phone = document.getElementById('userPhone').value.trim().replace(/\D/g, '');
+
+        currentUser = { name, phone: phone.startsWith('91') ? phone : '91' + phone };
+        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
+
+        if (!currentTrip) {
+            navigateToStep(2);
+        } else {
+            navigateToStep(3);
+        }
+    });
+
+    // ----------------------------------------------------------------------
+    // 5. STEP 2: Create Trip & Add Friends Handler
+    // ----------------------------------------------------------------------
+    function renderStep2() {
+        if (!membersListContainer.children.length) {
+            membersListContainer.innerHTML = `
+                <div class="member-input-row">
+                    <input type="text" class="m-name" placeholder="Friend Name (e.g. Rahul)" required value="${currentUser ? currentUser.name : ''}">
+                    <input type="tel" class="m-phone" placeholder="Mobile Number (e.g. 9811122334)" required value="${currentUser ? currentUser.phone : ''}">
+                    <span></span>
+                </div>
+                <div class="member-input-row">
+                    <input type="text" class="m-name" placeholder="Friend Name (e.g. Amit)" required value="Amit Patel">
+                    <input type="tel" class="m-phone" placeholder="Mobile Number" required value="9822233445">
+                    <span></span>
+                </div>
+            `;
+        }
+    }
+
+    addFriendRowBtn.addEventListener('click', () => {
+        const row = document.createElement('div');
+        row.className = 'member-input-row';
+        row.innerHTML = `
+            <input type="text" class="m-name" placeholder="Friend Name" required>
+            <input type="tel" class="m-phone" placeholder="Mobile Number" required>
+            <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">×</button>
+        `;
+        membersListContainer.appendChild(row);
+    });
+
+    // Load Sample Demo Trip
+    loadSampleTripBtn.addEventListener('click', () => {
+        tripTitleInput.value = 'Manali Trip 2026';
+        membersListContainer.innerHTML = `
+            <div class="member-input-row">
+                <input type="text" class="m-name" value="Rahul Sharma" required>
+                <input type="tel" class="m-phone" value="9811122334" required>
+                <span></span>
+            </div>
+            <div class="member-input-row">
+                <input type="text" class="m-name" value="Amit Patel" required>
+                <input type="tel" class="m-phone" value="9822233445" required>
+                <span></span>
+            </div>
+            <div class="member-input-row">
+                <input type="text" class="m-name" value="Priya Singh" required>
+                <input type="tel" class="m-phone" value="9833344556" required>
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <div class="member-input-row">
+                <input type="text" class="m-name" value="Vikram Kumar" required>
+                <input type="tel" class="m-phone" value="9844455667" required>
+                <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">×</button>
+            </div>
+        `;
+
+        currentTrip = {
+            id: 'TRIP-DEMO',
+            title: 'Manali Trip 2026',
+            members: [
+                { id: 'm1', name: 'Rahul Sharma', phone: '919811122334' },
+                { id: 'm2', name: 'Amit Patel', phone: '919822233445' },
+                { id: 'm3', name: 'Priya Singh', phone: '919833344556' },
+                { id: 'm4', name: 'Vikram Kumar', phone: '919844455667' }
+            ],
+            expenses: [
+                { id: 'e1', title: 'Hotel Stay (Resort)', amount: 2000, payerId: 'm1' },
+                { id: 'e2', title: 'Petrol & Toll Taxes', amount: 800, payerId: 'm2' },
+                { id: 'e3', title: 'Dinner at Mall Road', amount: 1200, payerId: 'm3' }
+            ]
+        };
+
+        localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
+        navigateToStep(3);
+    });
+
+    createTripForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = tripTitleInput.value.trim();
+        const rows = membersListContainer.querySelectorAll('.member-input-row');
+
+        let members = [];
+        rows.forEach((r, idx) => {
+            const mName = r.querySelector('.m-name').value.trim();
+            let mPhone = r.querySelector('.m-phone').value.trim().replace(/\D/g, '');
+            if (!mPhone.startsWith('91')) mPhone = '91' + mPhone;
+
+            if (mName) {
+                members.push({
+                    id: 'm-' + (idx + 1),
+                    name: mName,
+                    phone: mPhone
+                });
+            }
+        });
+
+        currentTrip = {
+            id: 'TRIP-' + Date.now(),
+            title: title,
+            members: members,
+            expenses: []
+        };
+
+        localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
+        navigateToStep(3);
+    });
+
+    // ----------------------------------------------------------------------
+    // 6. STEP 3: Live Expenses Logger Handler
+    // ----------------------------------------------------------------------
+    function renderStep3() {
+        if (!currentTrip) return;
+
+        activeTripTitleDisplay.textContent = currentTrip.title;
+
+        if (currentTrip.expenses.length === 0) {
+            expensesTableWrapper.innerHTML = `
+                <div style="text-align:center; padding:50px 20px; color:var(--text-muted);">
+                    <i class="fa-solid fa-receipt" style="font-size:3rem; color:var(--gray-300); margin-bottom:12px;"></i>
+                    <h4>Abhi koi kharcha add nahi hua hai.</h4>
+                    <p style="font-size:0.88rem; margin-top:4px;">Raste me jab koi kharcha kare, "+ Add New Expense" click karke entry karein.</p>
+                </div>
+            `;
+            return;
+        }
+
+        expensesTableWrapper.innerHTML = `
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Kharcha (Expense Title)</th>
+                        <th>Kisne Pese Diye (Payer)</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${currentTrip.expenses.map(e => {
+                        const payer = currentTrip.members.find(m => m.id === e.payerId) || { name: 'Unknown' };
+                        return `
+                            <tr>
+                                <td><strong>${e.title}</strong></td>
+                                <td><i class="fa-solid fa-user" style="color:var(--primary);"></i> ${payer.name}</td>
+                                <td><strong style="color:var(--primary);">₹${e.amount}</strong></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    openAddExpenseModalBtn.addEventListener('click', () => {
+        if (!currentTrip) return;
+        expPayer.innerHTML = currentTrip.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+        expenseModal.classList.add('active');
+    });
+
+    closeExpenseModal.addEventListener('click', () => expenseModal.classList.remove('active'));
+    cancelExpenseModal.addEventListener('click', () => expenseModal.classList.remove('active'));
+
+    expenseForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const title = document.getElementById('expTitle').value.trim();
+        const amount = parseFloat(document.getElementById('expAmount').value);
+        const payerId = expPayer.value;
+
+        const newExp = {
+            id: 'e-' + Date.now(),
+            title: title,
+            amount: amount,
+            payerId: payerId
+        };
+
+        currentTrip.expenses.unshift(newExp);
+        localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
+        expenseModal.classList.remove('active');
+        expenseForm.reset();
+        renderStep3();
+    });
+
+    gotoCalculateBtn.addEventListener('click', () => {
+        navigateToStep(4);
+    });
+
+    // ----------------------------------------------------------------------
+    // 7. STEP 4: Calculate & Final Settlement Algorithm
+    // ----------------------------------------------------------------------
+    function renderStep4() {
+        if (!currentTrip) return;
+
+        const totalExpense = currentTrip.expenses.reduce((sum, e) => sum + e.amount, 0);
+        const memberCount = currentTrip.members.length;
+        const perHead = memberCount > 0 ? totalExpense / memberCount : 0;
+
+        calcTotalExpense.textContent = `₹${totalExpense}`;
+        calcTotalFriends.textContent = `${memberCount} Members`;
+        calcPerHeadShare.textContent = `₹${Math.round(perHead)} / person`;
+
+        // Calculate Spent per Member
+        const memberStats = currentTrip.members.map(m => {
+            const spent = currentTrip.expenses
                 .filter(e => e.payerId === m.id)
                 .reduce((sum, e) => sum + e.amount, 0);
-            
-            const netBalance = totalSpent - perHeadTarget; // Positive = Overpaid, Negative = Owes
-
             return {
-                id: m.id,
-                name: m.name,
-                phone: m.phone,
-                upiId: m.upiId,
-                totalSpent: totalSpent,
-                netBalance: netBalance
+                ...m,
+                spent: spent,
+                netBalance: spent - perHead // Positive = Gets back, Negative = Owes
             };
         });
 
-        // Generate Minimal Settlement Transfers (Debtors -> Creditors)
+        // Render Spent Cards
+        spentBreakdownGrid.innerHTML = memberStats.map(m => `
+            <div class="spent-card">
+                <div class="spent-name">${m.name}</div>
+                <div class="spent-amount">₹${m.spent}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
+                    ${m.netBalance > 0.01 ? `<span style="color:var(--success); font-weight:700;">Gets back: +₹${Math.round(m.netBalance)}</span>` :
+                      m.netBalance < -0.01 ? `<span style="color:var(--danger); font-weight:700;">Owes: -₹${Math.round(Math.abs(m.netBalance))}</span>` :
+                      'Settled (₹0)'}
+                </div>
+            </div>
+        `).join('');
+
+        // Generate Minimal Transfers (Debtors -> Creditors)
         let creditors = memberStats.filter(m => m.netBalance > 0.01).map(m => ({ ...m }));
         let debtors = memberStats.filter(m => m.netBalance < -0.01).map(m => ({ ...m, owes: Math.abs(m.netBalance) }));
 
         let transfers = [];
 
-        debtors.forEach(debtor => {
-            let amountOwed = debtor.owes;
+        debtors.forEach(d => {
+            let amountOwed = d.owes;
+            creditors.forEach(c => {
+                if (amountOwed <= 0 || c.netBalance <= 0) return;
+                let amt = Math.min(amountOwed, c.netBalance);
+                amt = Math.round(amt);
 
-            creditors.forEach(creditor => {
-                if (amountOwed <= 0 || creditor.netBalance <= 0) return;
-
-                let transferAmount = Math.min(amountOwed, creditor.netBalance);
-                transferAmount = Math.round(transferAmount);
-
-                if (transferAmount > 0) {
+                if (amt > 0) {
                     transfers.push({
-                        debtorId: debtor.id,
-                        debtorName: debtor.name,
-                        debtorPhone: debtor.phone,
-                        creditorId: creditor.id,
-                        creditorName: creditor.name,
-                        creditorUpi: creditor.upiId,
-                        amount: transferAmount
+                        debtorName: d.name,
+                        debtorPhone: d.phone,
+                        creditorName: c.name,
+                        creditorPhone: c.phone,
+                        amount: amt
                     });
-
-                    amountOwed -= transferAmount;
-                    creditor.netBalance -= transferAmount;
+                    amountOwed -= amt;
+                    c.netBalance -= amt;
                 }
             });
         });
 
-        return {
-            totalExpense,
-            perHeadTarget,
-            memberStats,
-            transfers
-        };
-    }
+        // Render Direct WhatsApp Transfers Cards
+        if (transfers.length === 0) {
+            transfersListGrid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: #F0FDF4; border-radius: var(--radius-lg); border: 1px solid rgba(37,211,102,0.3);">
+                    <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: var(--whatsapp-green); margin-bottom: 12px;"></i>
+                    <h3>All Trip Expenses are 100% Equalized & Settled!</h3>
+                </div>
+            `;
+            return;
+        }
 
-    // ----------------------------------------------------------------------
-    // 5. Render Application Dashboard
-    // ----------------------------------------------------------------------
-    function renderApp() {
-        const trip = getActiveTrip();
-        if (!trip) return;
+        transfersListGrid.innerHTML = transfers.map(tr => `
+            <div class="transfer-direct-card">
+                <div class="transfer-info-text">
+                    <span class="text-debtor">${tr.debtorName}</span> ko <span class="text-creditor">${tr.creditorName}</span> ko paise dene hain.
+                </div>
 
-        // User Display
-        userNameDisplay.textContent = currentUser.name;
-        userPhoneDisplay.textContent = '+91 ' + currentUser.phone;
+                <div class="transfer-amount-tag">
+                    ₹${tr.amount}
+                </div>
 
-        // Render Nav Trips List
-        tripsNavList.innerHTML = trips.map(t => `
-            <a href="#" class="sidebar-nav-item ${t.id === activeTripId ? 'active' : ''}" onclick="switchTrip('${t.id}')">
-                <span><i class="fa-solid fa-plane"></i> ${t.title}</span>
-                <small style="font-size:0.75rem;">₹${t.expenses.reduce((s,e)=>s+e.amount,0)}</small>
-            </a>
+                <button class="btn btn-wa btn-block" onclick="sendDirectWaMessage('${tr.debtorPhone}', '${tr.debtorName}', '${tr.creditorName}', '${tr.creditorPhone}', ${tr.amount})">
+                    <i class="fa-brands fa-whatsapp"></i> Direct WhatsApp Message Bhejo
+                </button>
+            </div>
         `).join('');
-
-        headerTripName.textContent = trip.title;
-
-        // Run Equalizer Algorithm
-        const eq = calculateEqualizer(trip);
-
-        statTotalExpense.textContent = `₹${eq.totalExpense}`;
-        statPerHead.textContent = `₹${Math.round(eq.perHeadTarget)}`;
-        statMemberCount.textContent = trip.members.length;
-        statOwedTransfers.textContent = `${eq.transfers.length} Transfers`;
-        countExpenses.textContent = trip.expenses.length;
-
-        // Render Member Balances Cards
-        membersGrid.innerHTML = eq.memberStats.map(m => {
-            let balanceBadge = '';
-            if (m.netBalance > 0.01) {
-                balanceBadge = `<div class="balance-pill balance-overpaid"><span>Overpaid (Gets back):</span> <strong>+₹${Math.round(m.netBalance)}</strong></div>`;
-            } else if (m.netBalance < -0.01) {
-                balanceBadge = `<div class="balance-pill balance-owes"><span>Underpaid (Owes):</span> <strong>-₹${Math.round(Math.abs(m.netBalance))}</strong></div>`;
-            } else {
-                balanceBadge = `<div class="balance-pill balance-settled"><span>Balance:</span> <strong>Fully Settled (₹0)</strong></div>`;
-            }
-
-            return `
-                <div class="member-card">
-                    <div class="member-card-header">
-                        <span class="member-name">${m.name}</span>
-                        <span class="member-phone">+${m.phone}</span>
-                    </div>
-                    <div style="font-size:0.85rem; color:var(--dark-muted);">Total Spent: <strong>₹${m.totalSpent}</strong></div>
-                    ${balanceBadge}
-                </div>
-            `;
-        }).join('');
-
-        // Render Minimal Settlement Transfers Cards
-        if (eq.transfers.length === 0) {
-            settlementGrid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; background: rgba(15,23,42,0.8); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1);">
-                    <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: var(--neon-green); margin-bottom: 12px;"></i>
-                    <h3>All Trip Expenses are 100% Settled & Equalized!</h3>
-                </div>
-            `;
-        } else {
-            settlementGrid.innerHTML = eq.transfers.map(tr => `
-                <div class="transfer-card">
-                    <div class="transfer-flow">
-                        <span class="flow-debtor">${tr.debtorName}</span>
-                        <i class="fa-solid fa-arrow-right-long flow-arrow"></i>
-                        <span class="flow-creditor">${tr.creditorName}</span>
-                    </div>
-
-                    <div class="transfer-amount-badge">
-                        ₹${tr.amount}
-                    </div>
-
-                    <button class="btn-send-wa" onclick="sendWaSettlement('${tr.debtorPhone}', '${tr.debtorName}', '${tr.creditorName}', '${tr.creditorUpi}', ${tr.amount})">
-                        <i class="fa-brands fa-whatsapp"></i> Send WA Settlement Link
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        // Render Logged Expenses List
-        if (trip.expenses.length === 0) {
-            expensesList.innerHTML = `<div style="text-align:center; padding:30px; color:var(--dark-muted);">No expenses logged yet. Click "+ Log Expense" at top.</div>`;
-        } else {
-            expensesList.innerHTML = trip.expenses.map(exp => {
-                const payer = trip.members.find(m => m.id === exp.payerId) || { name: 'Unknown' };
-                return `
-                    <div class="expense-row-card">
-                        <div>
-                            <div class="exp-title">${exp.title}</div>
-                            <div class="exp-payer">Paid by <strong>${payer.name}</strong> on ${exp.date}</div>
-                        </div>
-                        <div class="exp-amount">₹${exp.amount}</div>
-                    </div>
-                `;
-            }).join('');
-        }
     }
 
-    window.switchTrip = function(id) {
-        activeTripId = id;
-        saveState();
-    };
+    backToExpensesBtn.addEventListener('click', () => {
+        navigateToStep(3);
+    });
 
     // ----------------------------------------------------------------------
-    // 6. Direct WhatsApp Settlement Launcher
+    // 8. EXACT WHATSAPP MESSAGE SPECIFIED BY USER
     // ----------------------------------------------------------------------
-    window.sendWaSettlement = function(phone, debtorName, creditorName, creditorUpi, amount) {
-        const trip = getActiveTrip();
-        const eq = calculateEqualizer(trip);
+    window.sendDirectWaMessage = function(debtorPhone, debtorName, creditorName, creditorPhone, amount) {
+        // Format Phone Number cleanly (Remove +91 prefix for display if needed)
+        let displayPhone = creditorPhone.replace(/^91/, '');
 
-        const msgText = 
-            `Hey ${debtorName}! 👋 Here is our *${trip.title}* Expense Settlement Breakdown:\n\n` +
-            `📊 *Total Trip Expense*: ₹${eq.totalExpense}\n` +
-            `🎯 *Per-Head Equal Share*: ₹${Math.round(eq.perHeadTarget)}\n\n` +
-            `💳 *Your Settlement Amount*: You need to pay *₹${amount}* to *${creditorName}*.\n\n` +
-            `📱 *Pay via UPI to ${creditorName}*:\n` +
-            `UPI ID: *${creditorUpi}*\n` +
-            `Instant Link: upi://pay?pa=${encodeURIComponent(creditorUpi)}&am=${amount}&pn=${encodeURIComponent(creditorName)}&cu=INR\n\n` +
-            `Please clear this balance when possible! Thanks 🙏`;
+        const messageText = `Tujhe ${creditorName} ko ₹${amount} dene hain, uska phone number ye hai: ${displayPhone}. Is number par GPay/PhonePe/Paytm se paise daal de.`;
 
-        let cleanPhone = phone.replace(/\D/g, '');
+        let cleanPhone = debtorPhone.replace(/\D/g, '');
         if (!cleanPhone.startsWith('91')) cleanPhone = '91' + cleanPhone;
 
-        const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msgText)}`;
+        const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(messageText)}`;
         window.open(waUrl, '_blank');
     };
 
-    openTripReportWaBtn.addEventListener('click', () => {
-        const trip = getActiveTrip();
-        const eq = calculateEqualizer(trip);
-
-        let reportMsg = `🏖️ *TRIP SUMMARY REPORT: ${trip.title}*\n\n` +
-            `📊 Total Expense: ₹${eq.totalExpense}\n` +
-            `🎯 Per-Head Target: ₹${Math.round(eq.perHeadTarget)}\n\n` +
-            `👥 *Member Balances*:\n`;
-
-        eq.memberStats.forEach(m => {
-            const bal = Math.round(m.netBalance);
-            if (bal > 0) reportMsg += `• ${m.name}: Gets back +₹${bal}\n`;
-            else if (bal < 0) reportMsg += `• ${m.name}: Owes -₹${Math.abs(bal)}\n`;
-            else reportMsg += `• ${m.name}: Fully Settled (₹0)\n`;
-        });
-
-        reportMsg += `\n📌 *Pending Settlement Transfers*:\n`;
-        eq.transfers.forEach(t => {
-            reportMsg += `• ${t.debtorName} pays ₹${t.amount} to ${t.creditorName} (UPI: ${t.creditorUpi})\n`;
-        });
-
-        reportMsg += `\nGenerated via TripSplit Engine 🚀`;
-
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(reportMsg)}`, '_blank');
-    });
-
-    // ----------------------------------------------------------------------
-    // 7. Modals & Form Handlers
-    // ----------------------------------------------------------------------
-    // Create Trip Modal
-    openCreateTripBtn.addEventListener('click', () => {
-        renderMemberInputs();
-        createTripModal.classList.add('active');
-    });
-    closeCreateTripModal.addEventListener('click', () => createTripModal.classList.remove('active'));
-    cancelCreateTripModal.addEventListener('click', () => createTripModal.classList.remove('active'));
-
-    function renderMemberInputs() {
-        memberInputsContainer.innerHTML = `
-            <div class="member-input-row">
-                <input type="text" class="m-name" placeholder="Name (e.g. Rahul)" required value="Rahul Sharma">
-                <input type="tel" class="m-phone" placeholder="Phone (10 digits)" required value="9811122334">
-                <input type="text" class="m-upi" placeholder="UPI ID" required value="rahul@upi">
-                <span></span>
-            </div>
-            <div class="member-input-row">
-                <input type="text" class="m-name" placeholder="Name" required value="Amit Patel">
-                <input type="tel" class="m-phone" placeholder="Phone" required value="9822233445">
-                <input type="text" class="m-upi" placeholder="UPI ID" required value="9822233445@upi">
-                <span></span>
-            </div>
-        `;
+    // Auto-initialize starting step
+    if (currentUser) {
+        navigateToStep(currentTrip ? 3 : 2);
+    } else {
+        navigateToStep(1);
     }
-
-    addMemberRowBtn.addEventListener('click', () => {
-        const row = document.createElement('div');
-        row.className = 'member-input-row';
-        row.innerHTML = `
-            <input type="text" class="m-name" placeholder="Name" required>
-            <input type="tel" class="m-phone" placeholder="Phone" required>
-            <input type="text" class="m-upi" placeholder="UPI ID" required>
-            <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">×</button>
-        `;
-        memberInputsContainer.appendChild(row);
-    });
-
-    createTripForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('newTripName').value.trim();
-        const rows = memberInputsContainer.querySelectorAll('.member-input-row');
-
-        let members = [];
-        rows.forEach((r, idx) => {
-            const mName = r.querySelector('.m-name').value.trim();
-            const mPhone = r.querySelector('.m-phone').value.trim().replace(/\D/g, '');
-            const mUpi = r.querySelector('.m-upi').value.trim();
-            if (mName) {
-                members.push({
-                    id: 'm-' + (idx + 1) + '-' + Date.now(),
-                    name: mName,
-                    phone: mPhone.startsWith('91') ? mPhone : '91' + mPhone,
-                    upiId: mUpi || (mPhone + '@upi')
-                });
-            }
-        });
-
-        const newTrip = {
-            id: 'TRIP-' + Math.floor(1000 + Math.random() * 9000),
-            title: name,
-            createdAt: new Date().toISOString().split('T')[0],
-            members: members,
-            expenses: []
-        };
-
-        trips.unshift(newTrip);
-        activeTripId = newTrip.id;
-        saveState();
-        createTripModal.classList.remove('active');
-        createTripForm.reset();
-        alert(`🏖️ Trip "${name}" Created Successfully! Add expenses to calculate settlement.`);
-    });
-
-    // Add Expense Modal
-    openAddExpenseBtn.addEventListener('click', () => {
-        const trip = getActiveTrip();
-        if (!trip) return;
-
-        expensePayer.innerHTML = trip.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-
-        splitCheckboxContainer.innerHTML = trip.members.map(m => `
-            <label><input type="checkbox" name="splitMember" value="${m.id}" checked> ${m.name}</label>
-        `).join('');
-
-        addExpenseModal.classList.add('active');
-    });
-
-    closeAddExpenseModal.addEventListener('click', () => addExpenseModal.classList.remove('active'));
-    cancelAddExpenseModal.addEventListener('click', () => addExpenseModal.classList.remove('active'));
-
-    addExpenseForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const trip = getActiveTrip();
-        if (!trip) return;
-
-        const title = document.getElementById('expenseTitle').value.trim();
-        const amount = parseFloat(document.getElementById('expenseAmount').value);
-        const payerId = expensePayer.value;
-
-        const selectedChecks = splitCheckboxContainer.querySelectorAll('input[type="checkbox"]:checked');
-        let splitAmong = Array.from(selectedChecks).map(c => c.value);
-
-        if (splitAmong.length === 0) {
-            splitAmong = trip.members.map(m => m.id);
-        }
-
-        const newExp = {
-            id: 'exp-' + Date.now(),
-            title: title,
-            amount: amount,
-            payerId: payerId,
-            splitAmong: splitAmong,
-            date: new Date().toISOString().split('T')[0]
-        };
-
-        trip.expenses.unshift(newExp);
-        saveState();
-        addExpenseModal.classList.remove('active');
-        addExpenseForm.reset();
-    });
-
-    // Auth Modal
-    openAuthModalBtn.addEventListener('click', () => authModal.classList.add('active'));
-    closeAuthModal.addEventListener('click', () => authModal.classList.remove('active'));
-    cancelAuthModal.addEventListener('click', () => authModal.classList.remove('active'));
-
-    authForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        currentUser = {
-            name: document.getElementById('authName').value.trim(),
-            phone: document.getElementById('authPhone').value.trim()
-        };
-        saveState();
-        authModal.classList.remove('active');
-        alert(`Profile updated as ${currentUser.name}!`);
-    });
-
-    // Initial Render
-    renderApp();
 });
