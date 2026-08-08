@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TripSplit - Clean 4-Step Trip & WhatsApp Settlement Engine
+   TripSplit - Auth, Past Trips Sidebar History & WhatsApp Engine
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,12 +7,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Initial State & Storage
     // ----------------------------------------------------------------------
     let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || null;
+    let trips = JSON.parse(localStorage.getItem('tripsplit_all_trips')) || [];
     let currentTrip = JSON.parse(localStorage.getItem('tripsplit_current_trip')) || null;
     let currentStep = 1;
+
+    // Seed Initial Demo Trip if empty
+    if (trips.length === 0) {
+        const demoTrip = {
+            id: 'TRIP-DEMO-1',
+            title: 'Manali Trip 2026',
+            date: '2026-08-08',
+            members: [
+                { id: 'm1', name: 'Rahul Sharma', phone: '919811122334' },
+                { id: 'm2', name: 'Amit Patel', phone: '919822233445' },
+                { id: 'm3', name: 'Priya Singh', phone: '919833344556' },
+                { id: 'm4', name: 'Vikram Kumar', phone: '919844455667' }
+            ],
+            expenses: [
+                { id: 'e1', title: 'Hotel Stay (Resort)', amount: 2000, payerId: 'm1' },
+                { id: 'e2', title: 'Petrol & Toll Taxes', amount: 800, payerId: 'm2' },
+                { id: 'e3', title: 'Dinner at Mall Road', amount: 1200, payerId: 'm3' }
+            ]
+        };
+        trips.push(demoTrip);
+        if (!currentTrip) currentTrip = demoTrip;
+        localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
+        localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
+    }
 
     // ----------------------------------------------------------------------
     // 2. DOM Elements
     // ----------------------------------------------------------------------
+    const userSidebar = document.getElementById('userSidebar');
+    const userAvatar = document.getElementById('userAvatar');
+    const sidebarUserName = document.getElementById('sidebarUserName');
+    const sidebarUserEmail = document.getElementById('sidebarUserEmail');
+    const pastTripsList = document.getElementById('pastTripsList');
+    const sidebarNewTripBtn = document.getElementById('sidebarNewTripBtn');
+    const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+
     // Navigation & Indicators
     const stepIndicators = [
         document.getElementById('stepIndicator1'),
@@ -33,8 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     const navLogoBtn = document.getElementById('navLogoBtn');
 
-    // Step 1: Login
+    // Step 1: Auth Tabs & Forms
+    const tabLoginBtn = document.getElementById('tabLoginBtn');
+    const tabSignupBtn = document.getElementById('tabSignupBtn');
     const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
 
     // Step 2: Create Trip
     const createTripForm = document.getElementById('createTripForm');
@@ -82,11 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
             else ind.classList.remove('active');
         });
 
-        // Navbar profile widget
+        // Sidebar & Navbar Auth State
         if (currentUser) {
+            userSidebar.style.display = 'flex';
             userWidget.style.display = 'flex';
             navUserName.textContent = currentUser.name.split(' ')[0];
+            sidebarUserName.textContent = currentUser.name;
+            sidebarUserEmail.textContent = currentUser.email || currentUser.phone;
+            userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+
+            renderPastTripsSidebar();
         } else {
+            userSidebar.style.display = 'none';
             userWidget.style.display = 'none';
         }
 
@@ -102,34 +145,97 @@ document.addEventListener('DOMContentLoaded', () => {
         else navigateToStep(1);
     });
 
-    logoutBtn.addEventListener('click', () => {
+    function performLogout() {
         currentUser = null;
         currentTrip = null;
         localStorage.removeItem('tripsplit_user');
         localStorage.removeItem('tripsplit_current_trip');
         navigateToStep(1);
-    });
+    }
+
+    logoutBtn.addEventListener('click', performLogout);
+    sidebarLogoutBtn.addEventListener('click', performLogout);
+    sidebarNewTripBtn.addEventListener('click', () => navigateToStep(2));
 
     // ----------------------------------------------------------------------
-    // 4. STEP 1: Login / Signup Handler
+    // 4. Render Left Sidebar Saved Past Trips
     // ----------------------------------------------------------------------
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('userName').value.trim();
-        const phone = document.getElementById('userPhone').value.trim().replace(/\D/g, '');
+    function renderPastTripsSidebar() {
+        if (trips.length === 0) {
+            pastTripsList.innerHTML = `<div style="font-size:0.78rem; color:var(--text-muted); padding:6px;">No saved trips yet.</div>`;
+            return;
+        }
 
-        currentUser = { name, phone: phone.startsWith('91') ? phone : '91' + phone };
-        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
+        pastTripsList.innerHTML = trips.map(t => {
+            const isActive = currentTrip && currentTrip.id === t.id;
+            const totalExp = t.expenses.reduce((sum, e) => sum + e.amount, 0);
 
-        if (!currentTrip) {
-            navigateToStep(2);
-        } else {
+            return `
+                <div class="past-trip-card ${isActive ? 'active' : ''}" onclick="selectPastTrip('${t.id}')">
+                    <div>${t.title}</div>
+                    <div class="past-trip-sub">
+                        <span>${t.members.length} Members</span>
+                        <span>₹${totalExp}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.selectPastTrip = function(id) {
+        const found = trips.find(t => t.id === id);
+        if (found) {
+            currentTrip = found;
+            localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
             navigateToStep(3);
         }
+    };
+
+    // ----------------------------------------------------------------------
+    // 5. STEP 1: Auth Tabs & Login / Signup
+    // ----------------------------------------------------------------------
+    tabLoginBtn.addEventListener('click', () => {
+        tabLoginBtn.classList.add('active');
+        tabSignupBtn.classList.remove('active');
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+    });
+
+    tabSignupBtn.addEventListener('click', () => {
+        tabSignupBtn.classList.add('active');
+        tabLoginBtn.classList.remove('active');
+        signupForm.style.display = 'block';
+        loginForm.style.display = 'none';
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+
+        currentUser = {
+            name: email.split('@')[0].toUpperCase(),
+            email: email,
+            phone: '9811122334'
+        };
+
+        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
+        navigateToStep(currentTrip ? 3 : 2);
+    });
+
+    signupForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('signupName').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        let phone = document.getElementById('signupPhone').value.trim().replace(/\D/g, '');
+        if (!phone.startsWith('91')) phone = '91' + phone;
+
+        currentUser = { name, email, phone };
+        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
+        navigateToStep(2);
     });
 
     // ----------------------------------------------------------------------
-    // 5. STEP 2: Create Trip & Add Friends Handler
+    // 6. STEP 2: Create Trip & Add Friends Handler
     // ----------------------------------------------------------------------
     function renderStep2() {
         if (!membersListContainer.children.length) {
@@ -161,32 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load Sample Demo Trip
     loadSampleTripBtn.addEventListener('click', () => {
-        tripTitleInput.value = 'Manali Trip 2026';
-        membersListContainer.innerHTML = `
-            <div class="member-input-row">
-                <input type="text" class="m-name" value="Rahul Sharma" required>
-                <input type="tel" class="m-phone" value="9811122334" required>
-                <span></span>
-            </div>
-            <div class="member-input-row">
-                <input type="text" class="m-name" value="Amit Patel" required>
-                <input type="tel" class="m-phone" value="9822233445" required>
-                <span></span>
-            </div>
-            <div class="member-input-row">
-                <input type="text" class="m-name" value="Priya Singh" required>
-                <input type="tel" class="m-phone" value="9833344556" required>
-                <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">×</button>
-            </div>
-            <div class="member-input-row">
-                <input type="text" class="m-name" value="Vikram Kumar" required>
-                <input type="tel" class="m-phone" value="9844455667" required>
-                <button type="button" class="btn-remove-row" onclick="this.parentElement.remove()">×</button>
-            </div>
-        `;
-
-        currentTrip = {
-            id: 'TRIP-DEMO',
+        const demoTrip = {
+            id: 'TRIP-DEMO-1',
             title: 'Manali Trip 2026',
             members: [
                 { id: 'm1', name: 'Rahul Sharma', phone: '919811122334' },
@@ -201,6 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
         };
 
+        const existingIdx = trips.findIndex(t => t.id === demoTrip.id);
+        if (existingIdx >= 0) trips[existingIdx] = demoTrip;
+        else trips.unshift(demoTrip);
+
+        currentTrip = demoTrip;
+        localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
         navigateToStep(3);
     });
@@ -232,12 +320,14 @@ document.addEventListener('DOMContentLoaded', () => {
             expenses: []
         };
 
+        trips.unshift(currentTrip);
+        localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
         navigateToStep(3);
     });
 
     // ----------------------------------------------------------------------
-    // 6. STEP 3: Live Expenses Logger Handler
+    // 7. STEP 3: Live Expenses Logger Handler
     // ----------------------------------------------------------------------
     function renderStep3() {
         if (!currentTrip) return;
@@ -303,6 +393,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         currentTrip.expenses.unshift(newExp);
+
+        // Update in all trips array
+        const idx = trips.findIndex(t => t.id === currentTrip.id);
+        if (idx >= 0) trips[idx] = currentTrip;
+
+        localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
         expenseModal.classList.remove('active');
         expenseForm.reset();
@@ -314,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------------------------
-    // 7. STEP 4: Calculate & Final Settlement Algorithm
+    // 8. STEP 4: Calculate & Final Settlement Algorithm
     // ----------------------------------------------------------------------
     function renderStep4() {
         if (!currentTrip) return;
@@ -335,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return {
                 ...m,
                 spent: spent,
-                netBalance: spent - perHead // Positive = Gets back, Negative = Owes
+                netBalance: spent - perHead
             };
         });
 
@@ -352,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Generate Minimal Transfers (Debtors -> Creditors)
+        // Minimal Transfers
         let creditors = memberStats.filter(m => m.netBalance > 0.01).map(m => ({ ...m }));
         let debtors = memberStats.filter(m => m.netBalance < -0.01).map(m => ({ ...m, owes: Math.abs(m.netBalance) }));
 
@@ -379,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Render Direct WhatsApp Transfers Cards
+        // Render WhatsApp Direct Cards
         if (transfers.length === 0) {
             transfersListGrid.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: #F0FDF4; border-radius: var(--radius-lg); border: 1px solid rgba(37,211,102,0.3);">
@@ -412,10 +508,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------------------------
-    // 8. EXACT WHATSAPP MESSAGE SPECIFIED BY USER
+    // 9. EXACT WHATSAPP MESSAGE FORMAT REQUIRED BY USER
     // ----------------------------------------------------------------------
     window.sendDirectWaMessage = function(debtorPhone, debtorName, creditorName, creditorPhone, amount) {
-        // Format Phone Number cleanly (Remove +91 prefix for display if needed)
         let displayPhone = creditorPhone.replace(/^91/, '');
 
         const messageText = `Tujhe ${creditorName} ko ₹${amount} dene hain, uska phone number ye hai: ${displayPhone}. Is number par GPay/PhonePe/Paytm se paise daal de.`;
@@ -427,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(waUrl, '_blank');
     };
 
-    // Auto-initialize starting step
+    // Auto-initialize
     if (currentUser) {
         navigateToStep(currentTrip ? 3 : 2);
     } else {

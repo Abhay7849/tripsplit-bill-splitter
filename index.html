@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TripSplit - Simple Group Trip Expense & WhatsApp Settlement</title>
-    <meta name="description" content="Easy 4-step group trip expense manager. Log trip expenses on the road, click calculate, and send direct WhatsApp settlement messages.">
+    <title>TripSplit - Group Trip Expense & WhatsApp Settlement Engine</title>
+    <meta name="description" content="Easy 4-step group trip expense manager with Password Auth, Saved Past Trips History, and Direct WhatsApp Settlement.">
     
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,198 +18,271 @@
 </head>
 <body class="clean-theme">
 
-    <!-- Header Navbar -->
-    <header class="app-navbar">
-        <div class="container nav-container">
-            <a href="#" class="brand-logo" id="navLogoBtn">
-                <div class="brand-icon"><i class="fa-solid fa-plane-departure"></i></div>
-                <span class="brand-name">Trip<strong>Split</strong></span>
-            </a>
+    <!-- App Shell Grid Container (With Left History Sidebar when logged in) -->
+    <div class="app-shell">
 
-            <!-- Step Progress Indicator -->
-            <div class="step-indicator-bar" id="stepIndicator">
-                <div class="step-item active" id="stepIndicator1"><span class="step-num">1</span> Login</div>
-                <div class="step-item" id="stepIndicator2"><span class="step-num">2</span> Create Trip</div>
-                <div class="step-item" id="stepIndicator3"><span class="step-num">3</span> Add Expenses</div>
-                <div class="step-item" id="stepIndicator4"><span class="step-num">4</span> Calculate & Settle</div>
-            </div>
-
-            <div class="user-profile-widget" id="userWidget" style="display:none;">
-                <i class="fa-solid fa-user-circle"></i>
-                <span id="navUserName">Rahul</span>
-                <button class="btn-logout" id="logoutBtn" title="Logout"><i class="fa-solid fa-power-off"></i></button>
-            </div>
-        </div>
-    </header>
-
-    <!-- STEP 1: LANDING & LOGIN / SIGNUP PAGE -->
-    <section class="page-view active" id="pageStep1">
-        <div class="container hero-login-container">
-            <div class="hero-left">
-                <span class="pill-badge"><i class="fa-solid fa-sparkles"></i> Simple & Human-Crafted</span>
-                <h1>Group Trip Expense & <span>WhatsApp Settlement App</span></h1>
-                <p>Friends ke saath trip par ja rahe ho? Raste me kaun kitna kharcha kar raha hai easily add karo, trip ke baad 1-Click me Calculate dabao aur WhatsApp par direct message bhejo!</p>
-                
-                <div class="feature-bullets">
-                    <div><i class="fa-solid fa-check-circle"></i> Simple Mobile Login / Signup</div>
-                    <div><i class="fa-solid fa-check-circle"></i> Trip Create karo & Friends add karo</div>
-                    <div><i class="fa-solid fa-check-circle"></i> Raste ka har kharcha entry karo</div>
-                    <div><i class="fa-brands fa-whatsapp"></i> Direct WhatsApp Message with Mobile Numbers</div>
+        <!-- 🏛️ LEFT USER DASHBOARD & PAST TRIPS HISTORY SIDEBAR -->
+        <aside class="user-history-sidebar" id="userSidebar" style="display:none;">
+            <div class="sidebar-header">
+                <div class="brand-logo-sm">
+                    <div class="brand-icon-sm"><i class="fa-solid fa-plane-departure"></i></div>
+                    <span class="brand-name-sm">Trip<strong>Split</strong></span>
                 </div>
             </div>
 
-            <div class="hero-right">
-                <div class="auth-card">
-                    <h2><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Login / Signup</h2>
-                    <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Trip start karne ke liye apna Name aur Mobile Number dalein.</p>
-
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="userName">Your Name *</label>
-                            <input type="text" id="userName" placeholder="e.g. Rahul Sharma" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="userPhone">Mobile Number *</label>
-                            <input type="tel" id="userPhone" placeholder="e.g. 9811122334" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-block">
-                            Continue to Create Trip <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- STEP 2: CREATE TRIP PAGE -->
-    <section class="page-view" id="pageStep2">
-        <div class="container page-container">
-            <div class="card-box main-card">
-                <div class="card-header-flex">
-                    <div>
-                        <span class="step-tag">STEP 2 OF 4</span>
-                        <h2><i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i> Create New Trip & Add Friends</h2>
-                    </div>
-                    <button class="btn btn-secondary btn-sm" id="loadSampleTripBtn">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample Demo Trip
-                    </button>
-                </div>
-
-                <form id="createTripForm">
-                    <div class="form-group">
-                        <label for="tripTitle">Trip Name *</label>
-                        <input type="text" id="tripTitle" placeholder="e.g. Manali Trip 2026, Goa Vacation" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Friends Joining the Trip (Name & Mobile Number) *</label>
-                        <div id="membersListContainer" class="members-input-list">
-                            <!-- Dynamic Member Input Rows -->
-                        </div>
-
-                        <button type="button" class="btn btn-outline btn-sm" id="addFriendRowBtn" style="margin-top:12px;">
-                            <i class="fa-solid fa-user-plus"></i> + Add Another Friend
-                        </button>
-                    </div>
-
-                    <div class="form-actions-flex">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            Save Trip & Start Logging Expenses <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </section>
-
-    <!-- STEP 3: RASTE KA KHARCHA (EXPENSE LOGGER) PAGE -->
-    <section class="page-view" id="pageStep3">
-        <div class="container page-container">
-            
-            <!-- Top Active Trip Header -->
-            <div class="trip-title-banner">
+            <!-- User Profile Card -->
+            <div class="user-profile-card">
+                <div class="avatar-circle" id="userAvatar">R</div>
                 <div>
-                    <span class="sub-label">ACTIVE TRIP</span>
-                    <h2 id="activeTripTitleDisplay">Manali Trip 2026</h2>
-                </div>
-                <div class="trip-header-actions">
-                    <button class="btn btn-outline" id="openAddExpenseModalBtn">
-                        <i class="fa-solid fa-plus-circle"></i> + Add New Expense
-                    </button>
-                    <button class="btn btn-success btn-lg" id="gotoCalculateBtn">
-                        <i class="fa-solid fa-calculator"></i> Calculate Final Settlement <i class="fa-solid fa-arrow-right"></i>
-                    </button>
+                    <strong class="user-name-text" id="sidebarUserName">Rahul Sharma</strong>
+                    <span class="user-email-text" id="sidebarUserEmail">rahul@gmail.com</span>
                 </div>
             </div>
 
-            <!-- Expense List Grid -->
-            <div class="expenses-summary-card">
-                <h3><i class="fa-solid fa-receipt"></i> Raste Me Hue Kharche (Trip Expenses)</h3>
-                <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein.</p>
+            <hr class="sidebar-divider">
 
-                <div class="expenses-table-wrapper" id="expensesTableWrapper">
-                    <!-- Dynamic Expenses Table -->
+            <!-- Past Trips History List -->
+            <div class="sidebar-section">
+                <div class="section-flex-title">
+                    <span class="menu-label">SAVED PAST TRIPS</span>
+                    <button class="btn-sm-add" id="sidebarNewTripBtn" title="Create New Trip"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="past-trips-list" id="pastTripsList">
+                    <!-- Dynamic Past Trips Rendered Here -->
                 </div>
             </div>
+
+            <hr class="sidebar-divider">
+
+            <button class="btn btn-logout-sidebar" id="sidebarLogoutBtn">
+                <i class="fa-solid fa-power-off"></i> Logout Account
+            </button>
+        </aside>
+
+        <!-- 🖥️ MAIN CANVAS WRAPPER -->
+        <div class="main-canvas-wrapper">
+
+            <!-- Header Navbar -->
+            <header class="app-navbar">
+                <div class="container nav-container">
+                    <a href="#" class="brand-logo" id="navLogoBtn">
+                        <div class="brand-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                        <span class="brand-name">Trip<strong>Split</strong></span>
+                    </a>
+
+                    <!-- Step Progress Indicator -->
+                    <div class="step-indicator-bar" id="stepIndicator">
+                        <div class="step-item active" id="stepIndicator1"><span class="step-num">1</span> Auth</div>
+                        <div class="step-item" id="stepIndicator2"><span class="step-num">2</span> Create Trip</div>
+                        <div class="step-item" id="stepIndicator3"><span class="step-num">3</span> Add Expenses</div>
+                        <div class="step-item" id="stepIndicator4"><span class="step-num">4</span> Calculate & Settle</div>
+                    </div>
+
+                    <div class="user-profile-widget" id="userWidget" style="display:none;">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span id="navUserName">Rahul</span>
+                        <button class="btn-logout" id="logoutBtn" title="Logout"><i class="fa-solid fa-power-off"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- STEP 1: LANDING & LOGIN / SIGNUP PAGE -->
+            <section class="page-view active" id="pageStep1">
+                <div class="container hero-login-container">
+                    <div class="hero-left">
+                        <span class="pill-badge"><i class="fa-solid fa-lock"></i> Secure Password Authentication</span>
+                        <h1>Group Trip Expense & <span>WhatsApp Settlement App</span></h1>
+                        <p>Login or Signup to save your trips history. Log expenses on the road, calculate equal shares, and send direct WhatsApp settlement messages to friends!</p>
+                        
+                        <div class="feature-bullets">
+                            <div><i class="fa-solid fa-check-circle"></i> ID & Password Secure Auth</div>
+                            <div><i class="fa-solid fa-check-circle"></i> Left Sidebar Past Trips History</div>
+                            <div><i class="fa-solid fa-check-circle"></i> Saved Expenses & Who Paid What</div>
+                            <div><i class="fa-brands fa-whatsapp"></i> Direct WhatsApp Messages with Numbers</div>
+                        </div>
+                    </div>
+
+                    <div class="hero-right">
+                        <div class="auth-card">
+                            <!-- Auth Tabs (Login vs Signup) -->
+                            <div class="auth-tabs">
+                                <button class="auth-tab active" id="tabLoginBtn">Login</button>
+                                <button class="auth-tab" id="tabSignupBtn">Signup / Register</button>
+                            </div>
+
+                            <!-- Login Form -->
+                            <form id="loginForm" class="auth-form-body">
+                                <div class="form-group">
+                                    <label for="loginEmail">Email / User ID *</label>
+                                    <input type="email" id="loginEmail" placeholder="e.g. rahul@gmail.com" required value="rahul@gmail.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="loginPassword">Password *</label>
+                                    <input type="password" id="loginPassword" placeholder="••••••••" required value="123456">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    Login to Account <i class="fa-solid fa-right-to-bracket"></i>
+                                </button>
+                            </form>
+
+                            <!-- Signup Form -->
+                            <form id="signupForm" class="auth-form-body" style="display:none;">
+                                <div class="form-group">
+                                    <label for="signupName">Full Name *</label>
+                                    <input type="text" id="signupName" placeholder="e.g. Rahul Sharma" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="signupEmail">Email / User ID *</label>
+                                    <input type="email" id="signupEmail" placeholder="e.g. rahul@gmail.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="signupPhone">Mobile Number *</label>
+                                    <input type="tel" id="signupPhone" placeholder="e.g. 9811122334" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="signupPassword">Password *</label>
+                                    <input type="password" id="signupPassword" placeholder="Create password" required>
+                                </div>
+
+                                <button type="submit" class="btn btn-success btn-block">
+                                    Create Account & Continue <i class="fa-solid fa-user-check"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 2: CREATE TRIP PAGE -->
+            <section class="page-view" id="pageStep2">
+                <div class="container page-container">
+                    <div class="card-box main-card">
+                        <div class="card-header-flex">
+                            <div>
+                                <span class="step-tag">STEP 2 OF 4</span>
+                                <h2><i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i> Create New Trip & Add Friends</h2>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="loadSampleTripBtn">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Load Demo Past Trip
+                            </button>
+                        </div>
+
+                        <form id="createTripForm">
+                            <div class="form-group">
+                                <label for="tripTitle">Trip Name *</label>
+                                <input type="text" id="tripTitle" placeholder="e.g. Manali Trip 2026, Goa Vacation" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Friends Joining the Trip (Name & Mobile Number) *</label>
+                                <div id="membersListContainer" class="members-input-list">
+                                    <!-- Dynamic Member Input Rows -->
+                                </div>
+
+                                <button type="button" class="btn btn-outline btn-sm" id="addFriendRowBtn" style="margin-top:12px;">
+                                    <i class="fa-solid fa-user-plus"></i> + Add Another Friend
+                                </button>
+                            </div>
+
+                            <div class="form-actions-flex">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Save Trip & Start Logging Expenses <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 3: RASTE KA KHARCHA (EXPENSE LOGGER) PAGE -->
+            <section class="page-view" id="pageStep3">
+                <div class="container page-container">
+                    
+                    <div class="trip-title-banner">
+                        <div>
+                            <span class="sub-label">ACTIVE TRIP</span>
+                            <h2 id="activeTripTitleDisplay">Manali Trip 2026</h2>
+                        </div>
+                        <div class="trip-header-actions">
+                            <button class="btn btn-outline" id="openAddExpenseModalBtn">
+                                <i class="fa-solid fa-plus-circle"></i> + Add New Expense
+                            </button>
+                            <button class="btn btn-success btn-lg" id="gotoCalculateBtn">
+                                <i class="fa-solid fa-calculator"></i> Calculate Final Settlement <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="expenses-summary-card">
+                        <h3><i class="fa-solid fa-receipt"></i> Raste Me Hue Kharche (Saved Expenses)</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein. Sabhi kharcha history me save ho raha hai.</p>
+
+                        <div class="expenses-table-wrapper" id="expensesTableWrapper">
+                            <!-- Dynamic Expenses Table -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- STEP 4: CALCULATE & FINAL SETTLEMENT PAGE -->
+            <section class="page-view" id="pageStep4">
+                <div class="container page-container">
+                    
+                    <div class="settlement-header-banner">
+                        <div>
+                            <span class="step-tag">STEP 4 OF 4</span>
+                            <h2><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> Final Expense Calculation & Hisab</h2>
+                        </div>
+                        <button class="btn btn-outline" id="backToExpensesBtn">
+                            <i class="fa-solid fa-arrow-left"></i> Add More Expenses
+                        </button>
+                    </div>
+
+                    <div class="calc-stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-label">Total Trip Expense</span>
+                            <strong class="stat-value" id="calcTotalExpense">₹4,000</strong>
+                        </div>
+
+                        <div class="stat-box">
+                            <span class="stat-label">Total Friends</span>
+                            <strong class="stat-value" id="calcTotalFriends">4 Members</strong>
+                        </div>
+
+                        <div class="stat-box highlight">
+                            <span class="stat-label">Equal Per-Head Share</span>
+                            <strong class="stat-value" id="calcPerHeadShare">₹1,000 / person</strong>
+                        </div>
+                    </div>
+
+                    <div class="card-box" style="margin-bottom:30px;">
+                        <h3><i class="fa-solid fa-users"></i> Kisne Kitna Kharcha Kiya (Individual Spent Summary)</h3>
+                        <div class="spent-breakdown-grid" id="spentBreakdownGrid">
+                            <!-- Dynamic Member Spent Cards -->
+                        </div>
+                    </div>
+
+                    <div class="card-box settlement-results-card">
+                        <div class="card-title-badge">
+                            <h3><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Final Settlement: Kon Kisko Kitna Pesa Dega</h3>
+                            <p style="font-size:0.88rem; color:var(--text-muted);">Direct WhatsApp message button par click karein ke pre-filled message bhej sakein!</p>
+                        </div>
+
+                        <div class="transfers-list-grid" id="transfersListGrid">
+                            <!-- Dynamic Transfer Cards -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
 
         </div>
-    </section>
+        <!-- END MAIN CANVAS -->
 
-    <!-- STEP 4: CALCULATE & FINAL SETTLEMENT PAGE -->
-    <section class="page-view" id="pageStep4">
-        <div class="container page-container">
-            
-            <div class="settlement-header-banner">
-                <div>
-                    <span class="step-tag">STEP 4 OF 4</span>
-                    <h2><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> Final Expense Calculation & Hisab</h2>
-                </div>
-                <button class="btn btn-outline" id="backToExpensesBtn">
-                    <i class="fa-solid fa-arrow-left"></i> Add More Expenses
-                </button>
-            </div>
-
-            <!-- Total Calculations Grid -->
-            <div class="calc-stats-grid">
-                <div class="stat-box">
-                    <span class="stat-label">Total Trip Expense</span>
-                    <strong class="stat-value" id="calcTotalExpense">₹4,000</strong>
-                </div>
-
-                <div class="stat-box">
-                    <span class="stat-label">Total Friends</span>
-                    <strong class="stat-value" id="calcTotalFriends">4 Members</strong>
-                </div>
-
-                <div class="stat-box highlight">
-                    <span class="stat-label">Equal Per-Head Share</span>
-                    <strong class="stat-value" id="calcPerHeadShare">₹1,000 / person</strong>
-                </div>
-            </div>
-
-            <!-- Member Spent Breakdown Table -->
-            <div class="card-box" style="margin-bottom:30px;">
-                <h3><i class="fa-solid fa-users"></i> Kisne Kitna Kharcha Kiya (Individual Spent Summary)</h3>
-                <div class="spent-breakdown-grid" id="spentBreakdownGrid">
-                    <!-- Dynamic Member Spent Cards -->
-                </div>
-            </div>
-
-            <!-- Final Hisab: Who Pays Whom & WhatsApp Direct Message -->
-            <div class="card-box settlement-results-card">
-                <div class="card-title-badge">
-                    <h3><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Final Settlement: Kon Kisko Kitna Pesa Dega</h3>
-                    <p style="font-size:0.88rem; color:var(--text-muted);">Direct message button par click karein. Direct WhatsApp khulega pre-filled message ke saath!</p>
-                </div>
-
-                <div class="transfers-list-grid" id="transfersListGrid">
-                    <!-- Dynamic Transfer Cards -->
-                </div>
-            </div>
-
-        </div>
-    </section>
+    </div>
+    <!-- END APP SHELL -->
 
     <!-- Modal: Add Expense Modal -->
     <div class="modal-overlay" id="expenseModal">
