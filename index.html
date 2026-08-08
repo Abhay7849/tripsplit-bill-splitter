@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripSplit - Group Trip Expense Equalizer & WhatsApp Settlement Engine</title>
+    <meta name="description" content="Automate group trip expenses, calculate equal shares, and send 1-click itemized WhatsApp payment reminders with UPI links.">
+    
+    <!-- Google Fonts: Syne & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome & WhatsApp Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="sidebar-layout-body">
+
+    <!-- App Shell Grid Container -->
+    <div class="app-shell">
+
+        <!-- 🏛️ ASYMMETRIC LEFT CONTROL SIDEBAR -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-brand">
+                <a href="#" class="brand-link">
+                    <div class="brand-hex-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                    <div class="brand-title-box">
+                        <span class="brand-main">Trip<span>Split</span></span>
+                        <span class="brand-sub">WhatsApp Settlement</span>
+                    </div>
+                </a>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <!-- Active Trips Navigation -->
+            <div class="sidebar-menu-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 8px;">
+                    <span class="menu-label" style="margin:0; padding:0;">YOUR TRIPS</span>
+                    <button class="btn-icon-add" id="openCreateTripBtn" title="Create New Trip"><i class="fa-solid fa-plus"></i></button>
+                </div>
+
+                <nav class="sidebar-nav" id="tripsNavList">
+                    <!-- Dynamic Trips Rendered Here -->
+                </nav>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <!-- Quick WhatsApp Settlement Card -->
+            <div class="sidebar-wa-card">
+                <div class="wa-card-header">
+                    <i class="fa-brands fa-whatsapp"></i> <span>1-Click WA Reminders</span>
+                </div>
+                <p>Sends full itemized trip breakdown & UPI payment link directly to your friend's phone number.</p>
+            </div>
+
+            <!-- Sidebar User Profile Footer -->
+            <div class="sidebar-user-footer">
+                <div class="user-role-badge">
+                    <div class="avatar-dot"></div>
+                    <div class="user-role-info">
+                        <span class="user-role-title" id="userNameDisplay">Rahul Sharma</span>
+                        <span class="user-status-text" id="userPhoneDisplay">+91 98111 22334</span>
+                    </div>
+                </div>
+                <button class="role-switch-icon-btn" id="openAuthModalBtn" title="Phone Login">
+                    <i class="fa-solid fa-user-gear"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- 🖥️ MAIN CANVAS DASHBOARD AREA -->
+        <div class="main-canvas-wrapper">
+
+            <!-- Top Canvas Header Bar -->
+            <header class="top-canvas-header">
+                <div class="header-left">
+                    <div class="active-trip-badge">
+                        <i class="fa-solid fa-location-dot" style="color:var(--neon-green);"></i>
+                        <span>Active Trip: <strong id="headerTripName">Manali Trip 2026</strong></span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="btn btn-emerald-pill" id="openAddExpenseBtn">
+                        <i class="fa-solid fa-receipt"></i> Log Expense
+                    </button>
+                    <button class="btn btn-wa-direct" id="openTripReportWaBtn">
+                        <i class="fa-brands fa-whatsapp"></i> Send Full Trip Summary
+                    </button>
+                </div>
+            </header>
+
+            <!-- Hero Metrics Banner -->
+            <section class="canvas-hero">
+                <div class="hero-glow-orb orb-1"></div>
+                <div class="hero-glow-orb orb-2"></div>
+
+                <div class="hero-container">
+                    <div class="hero-content">
+                        <div class="cyber-tag">
+                            <i class="fa-solid fa-scale-balanced"></i> Smart Equalizer Engine Active
+                        </div>
+                        <h1 class="hero-title">
+                            Trip Finances <span>Automated & Equalized</span> in Seconds.
+                        </h1>
+                        <p class="hero-subtitle">
+                            Log hotel, food, fuel & entry expenses as you travel. TripSplit calculates per-head shares, minimal transfers, and sends pre-filled WhatsApp payment reminders with UPI QR links.
+                        </p>
+                    </div>
+
+                    <!-- Live Trip Telemetry Summary Cards -->
+                    <div class="cyber-stats-grid">
+                        <div class="cyber-stat-card">
+                            <div class="stat-icon icon-emerald"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                            <div>
+                                <h3 id="statTotalExpense">₹4,000</h3>
+                                <span>Total Trip Expense</span>
+                            </div>
+                        </div>
+
+                        <div class="cyber-stat-card">
+                            <div class="stat-icon icon-blue"><i class="fa-solid fa-calculator"></i></div>
+                            <div>
+                                <h3 id="statPerHead">₹1,000</h3>
+                                <span>Per-Head Share (<span id="statMemberCount">4</span> Members)</span>
+                            </div>
+                        </div>
+
+                        <div class="cyber-stat-card">
+                            <div class="stat-icon icon-wa"><i class="fa-brands fa-whatsapp"></i></div>
+                            <div>
+                                <h3 id="statOwedTransfers">2 Reminders</h3>
+                                <span>Pending WA Settlements</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Body Content -->
+            <main class="main-body">
+
+                <!-- Section 1: Member Balances & Equalizer Status -->
+                <div class="section-title-bar">
+                    <h2><i class="fa-solid fa-users" style="color:var(--neon-green);"></i> Friend Roster & Individual Balances</h2>
+                </div>
+
+                <div class="members-cards-grid" id="membersGrid">
+                    <!-- Dynamic Member Cards Rendered Here -->
+                </div>
+
+                <!-- Section 2: Smart Minimal Settlement Transfers (Who Pays Whom) -->
+                <div class="section-title-bar" style="margin-top:40px;">
+                    <h2><i class="fa-solid fa-arrows-split-up-and-left" style="color:var(--whatsapp-green);"></i> Minimal Settlement Transfers & 1-Click WhatsApp Reminders</h2>
+                    <p style="font-size:0.85rem; color:var(--dark-muted);">Auto-calculated minimal payment transactions with direct WhatsApp launch to friend's phone number.</p>
+                </div>
+
+                <div class="settlement-transfers-grid" id="settlementGrid">
+                    <!-- Dynamic Settlement Transfer Cards Rendered Here -->
+                </div>
+
+                <!-- Section 3: Logged Expenses Feed -->
+                <div class="section-title-bar" style="margin-top:40px;">
+                    <h2><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary);"></i> Logged Trip Expenses (<span id="countExpenses">0</span>)</h2>
+                </div>
+
+                <div class="expenses-list-container" id="expensesList">
+                    <!-- Dynamic Expense Items Rendered Here -->
+                </div>
+
+            </main>
+
+            <!-- Footer -->
+            <footer class="cyber-footer">
+                <div class="footer-grid">
+                    <div class="footer-col brand-col">
+                        <a href="#" class="brand-link">
+                            <div class="brand-hex-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                            <div class="brand-title-box">
+                                <span class="brand-main" style="color:white;">Trip<span style="color:#00FF9D;">Split</span></span>
+                                <span class="brand-sub" style="color:#9CA3AF;">WhatsApp Settlement</span>
+                            </div>
+                        </a>
+                        <p>TripSplit automates group trip expenses, per-head shares, and 1-click WhatsApp payment reminders with UPI links.</p>
+                    </div>
+
+                    <div class="footer-col">
+                        <h4>System Capabilities</h4>
+                        <ul>
+                            <li><a>Multi-Member Trip Roster</a></li>
+                            <li><a>Real-Time Expense Logger</a></li>
+                            <li><a>Smart Equalizer Math Engine</a></li>
+                            <li><a>Direct WhatsApp Settlement API</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-col">
+                        <h4>Direct WhatsApp Support</h4>
+                        <ul class="contact-list">
+                            <li><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> WhatsApp Dispatch Engine Active</li>
+                            <li><i class="fa-solid fa-qrcode" style="color:#00FF9D;"></i> UPI Payment Links Enabled</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <p>&copy; 2026 TripSplit Systems. All Rights Reserved.</p>
+                    <p>Engineered for Group Trip Transparency & Frictionless Payments</p>
+                </div>
+            </footer>
+
+        </div>
+        <!-- END MAIN CANVAS -->
+
+    </div>
+    <!-- END APP SHELL -->
+
+    <!-- Modal 1: Create New Trip Modal -->
+    <div class="modal-overlay" id="createTripModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plane-circle-check" style="color:var(--neon-green);"></i> Create New Group Trip</h3>
+                <button class="modal-close-btn" id="closeCreateTripModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="createTripForm" class="modal-form">
+                <div class="form-group">
+                    <label for="newTripName">Trip Name *</label>
+                    <input type="text" id="newTripName" placeholder="e.g. Manali Trip 2026, Goa Vacation" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Add Trip Members (Name, Mobile & UPI ID) *</label>
+                    <div id="memberInputsContainer" class="member-inputs-list">
+                        <!-- Dynamic Member Input Rows -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="addMemberRowBtn" style="margin-top:10px;">
+                        <i class="fa-solid fa-user-plus"></i> Add Another Friend
+                    </button>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelCreateTripModal">Cancel</button>
+                    <button type="submit" class="btn btn-neon-green"><i class="fa-solid fa-circle-check"></i> Launch Trip</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Log Expense Modal -->
+    <div class="modal-overlay" id="addExpenseModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-receipt" style="color:var(--primary);"></i> Log Trip Expense</h3>
+                <button class="modal-close-btn" id="closeAddExpenseModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="addExpenseForm" class="modal-form">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="expenseTitle">Expense Description *</label>
+                        <input type="text" id="expenseTitle" placeholder="e.g. Hotel Stay, Petrol / Fuel, Dinner, Entry Tickets" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expenseAmount">Amount Paid (₹) *</label>
+                        <input type="number" id="expenseAmount" placeholder="e.g. 2000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expensePayer">Who Paid? *</label>
+                        <select id="expensePayer" required>
+                            <!-- Dynamic Members Options -->
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Split Among *</label>
+                        <div id="splitCheckboxContainer" class="checkbox-group-grid">
+                            <!-- Dynamic Member Checkboxes -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelAddExpenseModal">Cancel</button>
+                    <button type="submit" class="btn btn-emerald-pill"><i class="fa-solid fa-plus"></i> Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Phone Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-shield" style="color:var(--secondary);"></i> Phone Login & Profile</h3>
+                <button class="modal-close-btn" id="closeAuthModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="authForm" class="modal-form">
+                <div class="form-group">
+                    <label for="authName">Your Full Name *</label>
+                    <input type="text" id="authName" placeholder="e.g. Rahul Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label for="authPhone">Mobile Number (with 10 digits) *</label>
+                    <input type="tel" id="authPhone" placeholder="e.g. 9811122334" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelAuthModal">Cancel</button>
+                    <button type="submit" class="btn btn-neon-green"><i class="fa-solid fa-right-to-bracket"></i> Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
