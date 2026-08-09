@@ -17,9 +17,6 @@
     <!-- html2pdf.js for Formatted PDF Report Exports -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Chart.js for Interactive Expense Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="clean-theme">
@@ -225,19 +222,6 @@
                         </div>
                     </div>
 
-                    <!-- 📊 INTERACTIVE EXPENSE ANALYTICS CARD -->
-                    <div class="analytics-card-grid">
-                        <div class="analytics-chart-box">
-                            <div class="chart-header">
-                                <h3><i class="fa-solid fa-chart-pie" style="color:var(--primary);"></i> Expense Analytics & Categories</h3>
-                                <span class="badge-top-spender" id="highestSpenderBadge">👑 Top Spender: Rahul (₹2,000)</span>
-                            </div>
-                            <div class="chart-canvas-container">
-                                <canvas id="categoryChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="expenses-summary-card">
                         <h3><i class="fa-solid fa-receipt"></i> Raste Me Hue Kharche (Saved Expenses)</h3>
                         <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein.</p>
@@ -328,17 +312,6 @@
                 <div class="form-group">
                     <label for="expTitle">Kharche Ka Title *</label>
                     <input type="text" id="expTitle" placeholder="e.g. Hotel Stay, Petrol / Fuel, Dinner, Tea & Snacks" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="expCategory">Category *</label>
-                    <select id="expCategory" required>
-                        <option value="Hotel & Stay 🏨">Hotel & Stay 🏨</option>
-                        <option value="Food & Dinner 🍕">Food & Dinner 🍕</option>
-                        <option value="Petrol & Transport ⛽">Petrol & Transport ⛽</option>
-                        <option value="Shopping & Entry 🎟️">Shopping & Entry 🎟️</option>
-                        <option value="Others 💸">Others 💸</option>
-                    </select>
                 </div>
 
                 <div class="form-group">
