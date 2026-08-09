@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TripSplit - Strict User-Isolated MongoDB Data Engine
+   TripSplit - Chart.js Category Analytics & PDF Export Engine
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -21,14 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let userTrips = [];
     let currentTrip = null;
     let currentStep = 1;
+    let categoryChartInstance = null;
 
-    // Save Users to LocalStorage
     function saveUsers() {
         localStorage.setItem('tripsplit_registered_users', JSON.stringify(registeredUsers));
     }
     saveUsers();
 
-    // Fetch ONLY the logged-in user's trips from MongoDB
     async function loadTripsForCurrentUser() {
         if (!currentUser) {
             userTrips = [];
@@ -46,7 +45,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (!userTrips || userTrips.length === 0) {
-            // Read from user-isolated local key
             const userKey = `tripsplit_trips_${currentUser.email.toLowerCase()}`;
             userTrips = JSON.parse(localStorage.getItem(userKey)) || [];
         }
@@ -130,6 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const openAddExpenseModalBtn = document.getElementById('openAddExpenseModalBtn');
     const gotoCalculateBtn = document.getElementById('gotoCalculateBtn');
     const backToCreateTripBtn = document.getElementById('backToCreateTripBtn');
+    const highestSpenderBadge = document.getElementById('highestSpenderBadge');
 
     // Step 4: Calculate & Settlement
     const calcTotalExpense = document.getElementById('calcTotalExpense');
@@ -147,9 +146,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelExpenseModal = document.getElementById('cancelExpenseModal');
     const expenseForm = document.getElementById('expenseForm');
     const expPayer = document.getElementById('expPayer');
+    const expCategory = document.getElementById('expCategory');
 
     // ----------------------------------------------------------------------
-    // 3. Navigation & Stepper Controller
+    // 3. Navigation Controller
     // ----------------------------------------------------------------------
     function navigateToStep(stepNum) {
         currentStep = stepNum;
@@ -239,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
-            // Create temporary styled HTML container for PDF
             const pdfContainer = document.createElement('div');
             pdfContainer.style.padding = '30px';
             pdfContainer.style.fontFamily = "'Plus Jakarta Sans', Arial, sans-serif";
@@ -353,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     sidebarNewTripBtn.addEventListener('click', () => navigateToStep(2));
 
     // ----------------------------------------------------------------------
-    // 4. Render Left Sidebar Saved Past Trips (Isolated Per User)
+    // 4. Render Left Sidebar Saved Past Trips
     // ----------------------------------------------------------------------
     function renderPastTripsSidebar() {
         if (!userTrips || userTrips.length === 0) {
@@ -387,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // ----------------------------------------------------------------------
-    // 5. STRICT USER-ISOLATED AUTHENTICATION
+    // 5. AUTHENTICATION (MONGODB)
     // ----------------------------------------------------------------------
     tabLoginBtn.addEventListener('click', () => {
         tabLoginBtn.classList.add('active');
@@ -405,7 +404,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         signupInlineError.style.display = 'none';
     });
 
-    // MONGODB SIGNUP HANDLER
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         signupInlineError.style.display = 'none';
@@ -449,7 +447,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // MONGODB LOGIN HANDLER WITH USER ISOLATION
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         loginInlineError.style.display = 'none';
@@ -490,14 +487,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        
-        // Load trips ONLY belonging to this logged in user
         await loadTripsForCurrentUser();
         navigateToStep(currentTrip ? 3 : 2);
     });
 
     // ----------------------------------------------------------------------
-    // 6. STEP 2: Create Trip & Add Friends (Isolated by User Email)
+    // 6. STEP 2: Create Trip
     // ----------------------------------------------------------------------
     function renderStep2() {
         if (!membersListContainer.children.length) {
@@ -541,9 +536,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { id: 'm4', name: 'Vikram Kumar', phone: '919844455667' }
             ],
             expenses: [
-                { id: 'e1', title: 'Hotel Stay (Resort)', amount: 2000, payerId: 'm1' },
-                { id: 'e2', title: 'Petrol & Toll Taxes', amount: 800, payerId: 'm2' },
-                { id: 'e3', title: 'Dinner at Mall Road', amount: 1200, payerId: 'm3' }
+                { id: 'e1', title: 'Hotel Stay (Resort)', category: 'Hotel & Stay 🏨', amount: 2000, payerId: 'm1' },
+                { id: 'e2', title: 'Petrol & Toll Taxes', category: 'Petrol & Transport ⛽', amount: 800, payerId: 'm2' },
+                { id: 'e3', title: 'Dinner at Mall Road', category: 'Food & Dinner 🍕', amount: 1200, payerId: 'm3' }
             ]
         };
 
@@ -591,7 +586,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             expenses: []
         };
 
-        // Save Trip directly to MongoDB Database API
         try {
             await fetch(`${API_BASE}/trips`, {
                 method: 'POST',
@@ -608,12 +602,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------------
-    // 7. STEP 3: Live Expenses Logger Handler
+    // 7. STEP 3: Expenses Logger & CHART.JS CATEGORY ANALYTICS
     // ----------------------------------------------------------------------
     function renderStep3() {
         if (!currentTrip) return;
 
         activeTripTitleDisplay.textContent = currentTrip.title;
+
+        // Render Chart & Top Spender Badge
+        renderExpenseAnalyticsChart();
 
         if (currentTrip.expenses.length === 0) {
             expensesTableWrapper.innerHTML = `
@@ -631,6 +628,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <thead>
                     <tr>
                         <th>Kharcha (Expense Title)</th>
+                        <th>Category</th>
                         <th>Kisne Pese Diye (Payer)</th>
                         <th>Amount</th>
                     </tr>
@@ -638,9 +636,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <tbody>
                     ${currentTrip.expenses.map(e => {
                         const payer = currentTrip.members.find(m => m.id === e.payerId) || { name: 'Unknown' };
+                        const cat = e.category || 'General 💸';
                         return `
                             <tr>
                                 <td><strong>${e.title}</strong></td>
+                                <td><span style="font-size:0.82rem; background:var(--gray-100); padding:4px 10px; border-radius:12px;">${cat}</span></td>
                                 <td><i class="fa-solid fa-user" style="color:var(--primary);"></i> ${payer.name}</td>
                                 <td><strong style="color:var(--primary);">₹${e.amount}</strong></td>
                             </tr>
@@ -649,6 +649,86 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </tbody>
             </table>
         `;
+    }
+
+    // CHART.JS ANALYTICS ENGINE
+    function renderExpenseAnalyticsChart() {
+        if (!currentTrip || !currentTrip.expenses || currentTrip.expenses.length === 0) {
+            highestSpenderBadge.textContent = '👑 Top Spender: No expenses yet';
+            if (categoryChartInstance) {
+                categoryChartInstance.destroy();
+                categoryChartInstance = null;
+            }
+            return;
+        }
+
+        // Calculate Top Spender
+        const payerTotals = {};
+        currentTrip.members.forEach(m => payerTotals[m.id] = 0);
+
+        currentTrip.expenses.forEach(e => {
+            if (!payerTotals[e.payerId]) payerTotals[e.payerId] = 0;
+            payerTotals[e.payerId] += e.amount;
+        });
+
+        let topPayerId = null;
+        let maxSpent = -1;
+        Object.keys(payerTotals).forEach(pid => {
+            if (payerTotals[pid] > maxSpent) {
+                maxSpent = payerTotals[pid];
+                topPayerId = pid;
+            }
+        });
+
+        const topMember = currentTrip.members.find(m => m.id === topPayerId);
+        if (topMember && maxSpent > 0) {
+            highestSpenderBadge.textContent = `👑 Top Spender: ${topMember.name} (₹${maxSpent})`;
+        } else {
+            highestSpenderBadge.textContent = `👑 Top Spender: No spending yet`;
+        }
+
+        // Calculate Category Breakdown
+        const categoryTotals = {};
+        currentTrip.expenses.forEach(e => {
+            const cat = e.category || 'Others 💸';
+            if (!categoryTotals[cat]) categoryTotals[cat] = 0;
+            categoryTotals[cat] += e.amount;
+        });
+
+        const labels = Object.keys(categoryTotals);
+        const dataValues = Object.values(categoryTotals);
+
+        const ctx = document.getElementById('categoryChart');
+        if (!ctx) return;
+
+        if (categoryChartInstance) {
+            categoryChartInstance.destroy();
+        }
+
+        categoryChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: [
+                        '#4F46E5', '#10B981', '#F59E0B', '#0EA5E9', '#EC4899', '#8B5CF6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+                    }
+                }
+            }
+        });
     }
 
     openAddExpenseModalBtn.addEventListener('click', () => {
@@ -665,12 +745,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentTrip) return;
 
         const title = document.getElementById('expTitle').value.trim();
+        const category = expCategory ? expCategory.value : 'General 💸';
         const amount = parseFloat(document.getElementById('expAmount').value);
         const payerId = expPayer.value;
 
         const newExp = {
             id: 'e-' + Date.now(),
             title: title,
+            category: category,
             amount: amount,
             payerId: payerId
         };
