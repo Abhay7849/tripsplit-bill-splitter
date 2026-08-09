@@ -86,7 +86,7 @@
                 </div>
             </header>
 
-            <!-- STEP 1: CLEAN MINIMALIST & PROFESSIONAL FIRST PAGE -->
+            <!-- STEP 1: CLEAN MINIMALIST FIRST PAGE -->
             <section class="page-view active" id="pageStep1">
                 <div class="container hero-login-container">
                     <div class="hero-left">
@@ -113,6 +113,11 @@
                                     <input type="password" id="loginPassword" placeholder="••••••••" required value="123">
                                 </div>
 
+                                <!-- Professional Inline Error Message Container -->
+                                <div class="inline-error-box" id="loginInlineError" style="display:none;">
+                                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid Email or Password. Please try again.</span>
+                                </div>
+
                                 <button type="submit" class="btn btn-primary btn-block">
                                     Login to Account <i class="fa-solid fa-arrow-right"></i>
                                 </button>
@@ -135,6 +140,11 @@
                                 <div class="form-group">
                                     <label for="signupPassword">Password *</label>
                                     <input type="password" id="signupPassword" placeholder="Create password" required>
+                                </div>
+
+                                <!-- Professional Inline Error/Success Box -->
+                                <div class="inline-error-box" id="signupInlineError" style="display:none;">
+                                    <i class="fa-solid fa-circle-exclamation"></i> <span id="signupErrorText">Account already exists!</span>
                                 </div>
 
                                 <button type="submit" class="btn btn-success btn-block">
@@ -197,8 +207,11 @@
                             <h2 id="activeTripTitleDisplay">Manali Trip 2026</h2>
                         </div>
                         <div class="trip-header-actions">
+                            <button class="btn btn-secondary" id="backToCreateTripBtn">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit / New Trip
+                            </button>
                             <button class="btn btn-outline" id="openAddExpenseModalBtn">
-                                <i class="fa-solid fa-plus-circle"></i> + Add New Expense
+                                <i class="fa-solid fa-plus-circle"></i> + Add Expense
                             </button>
                             <button class="btn btn-success btn-lg" id="gotoCalculateBtn">
                                 <i class="fa-solid fa-calculator"></i> Calculate Final Settlement <i class="fa-solid fa-arrow-right"></i>
@@ -208,7 +221,7 @@
 
                     <div class="expenses-summary-card">
                         <h3><i class="fa-solid fa-receipt"></i> Raste Me Hue Kharche (Saved Expenses)</h3>
-                        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein. Sabhi kharcha MongoDB DB me save ho raha hai.</p>
+                        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein.</p>
 
                         <div class="expenses-table-wrapper" id="expensesTableWrapper">
                             <!-- Dynamic Expenses Table -->
@@ -227,9 +240,14 @@
                             <span class="step-tag">STEP 4 OF 4</span>
                             <h2><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> Final Expense Calculation & Hisab</h2>
                         </div>
-                        <button class="btn btn-outline" id="backToExpensesBtn">
-                            <i class="fa-solid fa-arrow-left"></i> Add More Expenses
-                        </button>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-secondary" id="backToCreateTripFromStep4Btn">
+                                <i class="fa-solid fa-pen-to-square"></i> New / Edit Trip
+                            </button>
+                            <button class="btn btn-outline" id="backToExpensesBtn">
+                                <i class="fa-solid fa-arrow-left"></i> ← Back to Expenses Dashboard
+                            </button>
+                        </div>
                     </div>
 
                     <div class="calc-stats-grid">

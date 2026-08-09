@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TripSplit - MongoDB Database Integrated Authentication & History Engine
+   TripSplit - Inline Errors & Seamless Navigation Engine
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -82,11 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     const navLogoBtn = document.getElementById('navLogoBtn');
 
-    // Step 1: Auth Tabs & Forms
+    // Step 1: Auth Tabs & Inline Errors
     const tabLoginBtn = document.getElementById('tabLoginBtn');
     const tabSignupBtn = document.getElementById('tabSignupBtn');
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
+
+    const loginInlineError = document.getElementById('loginInlineError');
+    const loginErrorText = document.getElementById('loginErrorText');
+    const signupInlineError = document.getElementById('signupInlineError');
+    const signupErrorText = document.getElementById('signupErrorText');
 
     // Step 2: Create Trip
     const createTripForm = document.getElementById('createTripForm');
@@ -100,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const expensesTableWrapper = document.getElementById('expensesTableWrapper');
     const openAddExpenseModalBtn = document.getElementById('openAddExpenseModalBtn');
     const gotoCalculateBtn = document.getElementById('gotoCalculateBtn');
+    const backToCreateTripBtn = document.getElementById('backToCreateTripBtn');
 
     // Step 4: Calculate & Settlement
     const calcTotalExpense = document.getElementById('calcTotalExpense');
@@ -108,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const spentBreakdownGrid = document.getElementById('spentBreakdownGrid');
     const transfersListGrid = document.getElementById('transfersListGrid');
     const backToExpensesBtn = document.getElementById('backToExpensesBtn');
+    const backToCreateTripFromStep4Btn = document.getElementById('backToCreateTripFromStep4Btn');
 
     // Modal: Add Expense
     const expenseModal = document.getElementById('expenseModal');
@@ -121,6 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------------------------
     function navigateToStep(stepNum) {
         currentStep = stepNum;
+
+        // Hide inline errors on navigation
+        if (loginInlineError) loginInlineError.style.display = 'none';
+        if (signupInlineError) signupInlineError.style.display = 'none';
 
         pages.forEach((p, idx) => {
             if (idx + 1 === stepNum) p.classList.add('active');
@@ -156,6 +167,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentUser) navigateToStep(currentTrip ? 3 : 2);
         else navigateToStep(1);
     });
+
+    // BACK NAVIGATION EVENT LISTENERS
+    if (backToCreateTripBtn) {
+        backToCreateTripBtn.addEventListener('click', () => navigateToStep(2));
+    }
+    if (backToCreateTripFromStep4Btn) {
+        backToCreateTripFromStep4Btn.addEventListener('click', () => navigateToStep(2));
+    }
+    if (backToExpensesBtn) {
+        backToExpensesBtn.addEventListener('click', () => navigateToStep(3));
+    }
 
     function performLogout() {
         currentUser = null;
@@ -204,13 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ----------------------------------------------------------------------
-    // 5. STRICT AUTHENTICATION WITH MONGODB DATABASE API SYNC
+    // 5. INLINE PROFESSIONAL AUTHENTICATION (NO POPUP ALERTS)
     // ----------------------------------------------------------------------
     tabLoginBtn.addEventListener('click', () => {
         tabLoginBtn.classList.add('active');
         tabSignupBtn.classList.remove('active');
         loginForm.style.display = 'block';
         signupForm.style.display = 'none';
+        loginInlineError.style.display = 'none';
     });
 
     tabSignupBtn.addEventListener('click', () => {
@@ -218,11 +241,14 @@ document.addEventListener('DOMContentLoaded', () => {
         tabLoginBtn.classList.remove('active');
         signupForm.style.display = 'block';
         loginForm.style.display = 'none';
+        signupInlineError.style.display = 'none';
     });
 
-    // MONGODB SIGNUP HANDLER
+    // INLINE SIGNUP HANDLER
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        signupInlineError.style.display = 'none';
+
         const name = document.getElementById('signupName').value.trim();
         const email = document.getElementById('signupEmail').value.trim().toLowerCase();
         let phone = document.getElementById('signupPhone').value.trim().replace(/\D/g, '');
@@ -230,62 +256,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!phone.startsWith('91')) phone = '91' + phone;
 
-        // Try MongoDB API call
-        try {
-            const res = await fetch(`${API_BASE}/users/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone, password })
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                alert(`⚠️ ${data.error || 'Registration error'}`);
-                return;
-            }
-        } catch (err) {
-            console.log('MongoDB API Syncing in Local Mode');
-        }
-
-        // Local State Fallback
+        // Check if email already registered
         const existing = registeredUsers.find(u => u.email.toLowerCase() === email);
-        if (!existing) {
-            registeredUsers.push({ name, email, phone, password });
-            saveUsers();
+        if (existing) {
+            signupErrorText.textContent = 'Account with this email already exists! Please click Login.';
+            signupInlineError.className = 'inline-error-box';
+            signupInlineError.style.display = 'flex';
+            return;
         }
 
-        alert(`🍃 Account created in MongoDB Database for ${name}!\n\nNow please click Login using Email: ${email} and your Password.`);
-        signupForm.reset();
-        tabLoginBtn.click();
-        document.getElementById('loginEmail').value = email;
+        const newUser = { name, email, phone, password };
+        registeredUsers.push(newUser);
+        saveUsers();
+
+        // Show Inline Success Box
+        signupErrorText.textContent = `Account created successfully! Switching to Login tab...`;
+        signupInlineError.className = 'inline-error-box success';
+        signupInlineError.style.display = 'flex';
+
+        setTimeout(() => {
+            signupForm.reset();
+            tabLoginBtn.click();
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+        }, 1200);
     });
 
-    // MONGODB LOGIN HANDLER
+    // INLINE LOGIN HANDLER (NO POPUP ALERTS)
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        loginInlineError.style.display = 'none';
+
         const email = document.getElementById('loginEmail').value.trim().toLowerCase();
         const password = document.getElementById('loginPassword').value;
 
-        let userFound = null;
-
-        try {
-            const res = await fetch(`${API_BASE}/users/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            if (res.ok) {
-                userFound = await res.json();
-            }
-        } catch (err) {
-            console.log('Using Local Verified Account');
-        }
+        let userFound = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
 
         if (!userFound) {
-            userFound = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
-        }
-
-        if (!userFound) {
-            alert('❌ Account not found in MongoDB Database or Password incorrect!\n\nPlease check your credentials or click "Signup / Register" to create an account first.');
+            loginErrorText.textContent = 'Invalid Email or Password. Please check your credentials or Signup first.';
+            loginInlineError.style.display = 'flex';
             return;
         }
 
@@ -296,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        alert(`✅ Verified MongoDB Login Success! Welcome, ${userFound.name}.`);
         navigateToStep(currentTrip ? 3 : 2);
     });
 
@@ -385,17 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
             expenses: []
         };
 
-        // Sync to MongoDB Backend
-        try {
-            await fetch(`${API_BASE}/trips`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentTrip)
-            });
-        } catch (err) {
-            console.log('MongoDB API Syncing');
-        }
-
         trips.unshift(currentTrip);
         localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
@@ -415,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="text-align:center; padding:50px 20px; color:var(--text-muted);">
                     <i class="fa-solid fa-receipt" style="font-size:3rem; color:var(--gray-300); margin-bottom:12px;"></i>
                     <h4>Abhi koi kharcha add nahi hua hai.</h4>
-                    <p style="font-size:0.88rem; margin-top:4px;">Raste me jab koi kharcha kare, "+ Add New Expense" click karke entry karein.</p>
+                    <p style="font-size:0.88rem; margin-top:4px;">Raste me jab koi kharcha kare, "+ Add Expense" click karke entry karein.</p>
                 </div>
             `;
             return;
@@ -573,10 +570,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
     }
-
-    backToExpensesBtn.addEventListener('click', () => {
-        navigateToStep(3);
-    });
 
     // ----------------------------------------------------------------------
     // 9. DIRECT WHATSAPP MESSAGE FORMAT

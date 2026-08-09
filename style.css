@@ -39,6 +39,27 @@
 
 html { scroll-behavior: smooth; font-size: 16px; }
 
+/* Inline Professional Error Box */
+.inline-error-box {
+    background-color: #FEF2F2;
+    border: 1px solid #FCA5A5;
+    color: #DC2626;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-error-box.success {
+    background-color: #F0FDF4;
+    border-color: #86EFAC;
+    color: #16A34A;
+}
+
 body.clean-theme {
     font-family: 'Plus Jakarta Sans', sans-serif;
     color: var(--dark);
