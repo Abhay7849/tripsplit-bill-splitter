@@ -276,9 +276,9 @@ button { cursor: pointer; border: none; outline: none; font-family: inherit; }
 
 .icon-input-group label { font-weight: 700; font-size: 0.82rem; color: var(--dark); margin-bottom: 6px; display: block; }
 .input-wrapper { position: relative; display: flex; align-items: center; }
-.field-icon { position: absolute; left: 14px; color: var(--text-muted); font-size: 0.92rem; pointer-events: none; transition: var(--transition); }
+.field-icon { position: absolute; right: 14px; color: var(--text-muted); font-size: 0.92rem; pointer-events: none; transition: var(--transition); }
 
-.icon-input-group input { width: 100%; padding: 12px 14px 12px 42px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); font-size: 0.92rem; font-family: inherit; font-weight: 600; color: var(--dark); transition: var(--transition); background: var(--light-bg); }
+.icon-input-group input { width: 100%; padding: 12px 42px 12px 14px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); font-size: 0.92rem; font-family: inherit; font-weight: 600; color: var(--dark); transition: var(--transition); background: var(--light-bg); }
 .icon-input-group input:focus { outline: none; border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12); }
 .icon-input-group input:focus + .field-icon, .icon-input-group input:focus ~ .field-icon { color: var(--primary); }
 
