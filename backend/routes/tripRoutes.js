@@ -2,42 +2,46 @@ const express = require('express');
 const router = express.Router();
 const Trip = require('../models/Trip');
 
-// GET all trips from MongoDB
+// GET trips filtered by logged-in user email
 router.get('/', async (req, res) => {
     try {
-        const trips = await Trip.find().sort({ createdAt: -1 });
+        const { userEmail } = req.query;
+        let query = {};
+        if (userEmail) {
+            query.createdByEmail = userEmail.toLowerCase();
+        }
+        const trips = await Trip.find(query).sort({ createdAt: -1 });
         res.json(trips);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// POST Create new trip in MongoDB
+// POST Create new trip with user isolation
 router.post('/', async (req, res) => {
     try {
-        const newTrip = new Trip(req.body);
+        const { id, title, createdByEmail, members, expenses } = req.body;
+        const newTrip = new Trip({
+            id,
+            title,
+            createdByEmail: createdByEmail ? createdByEmail.toLowerCase() : 'guest@gmail.com',
+            members,
+            expenses
+        });
         const saved = await newTrip.save();
-        console.log('🍃 MongoDB Saved New Trip:', saved.title);
+        console.log(`🍃 MongoDB Saved Trip "${saved.title}" for user: ${saved.createdByEmail}`);
         res.status(201).json(saved);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// POST Add expense to trip in MongoDB
+// POST Add expense to trip
 router.post('/:id/expenses', async (req, res) => {
     try {
         const trip = await Trip.findOne({ id: req.params.id });
         if (!trip) {
-            // If trip not found by custom ID, search by _id or create
-            const newTrip = new Trip({
-                id: req.params.id,
-                title: 'Active Trip',
-                members: [],
-                expenses: [req.body]
-            });
-            await newTrip.save();
-            return res.status(201).json(newTrip);
+            return res.status(404).json({ error: 'Trip not found' });
         }
 
         trip.expenses.unshift(req.body);

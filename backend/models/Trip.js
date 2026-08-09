@@ -19,6 +19,7 @@ const expenseSchema = new mongoose.Schema({
 const tripSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     title: { type: String, required: true },
+    createdByEmail: { type: String, required: true, index: true },
     members: [memberSchema],
     expenses: [expenseSchema]
 }, { timestamps: true });
