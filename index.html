@@ -89,127 +89,102 @@
                 </div>
             </header>
 
-            <!-- STEP 1: ULTRA-ATTRACTIVE MODERN WOW AUTH PAGE -->
+            <!-- STEP 1: CLEAN & ELEGANT CENTERED PREMIUM AUTH PAGE -->
             <section class="page-view active" id="pageStep1">
-                <div class="container hero-login-container">
+                <div class="container centered-auth-wrapper">
                     
-                    <!-- Left Hero Showcase -->
-                    <div class="hero-left">
-                        <div class="hero-badge"><i class="fa-solid fa-bolt" style="color:#F59E0B;"></i> Smart Group Expense Engine</div>
-                        <h1 class="hero-gradient-title">Split Trip Expenses <br><span class="gradient-text">& Settle on WhatsApp</span></h1>
-                        <p class="hero-subtext">Log expenses on the go, auto-calculate equal shares, and send 1-click WhatsApp payment links to friends.</p>
-
-                        <!-- Feature Pill Cards -->
-                        <div class="feature-pills-row">
-                            <div class="pill-card">
-                                <div class="pill-icon wa-icon"><i class="fa-brands fa-whatsapp"></i></div>
-                                <div>
-                                    <strong>Direct WhatsApp Settlement</strong>
-                                    <span>Send pre-filled payment request links</span>
-                                </div>
-                            </div>
-
-                            <div class="pill-card">
-                                <div class="pill-icon pdf-icon"><i class="fa-solid fa-file-pdf"></i></div>
-                                <div>
-                                    <strong>1-Click PDF Report Export</strong>
-                                    <span>Download itemized settlement audit PDF</span>
-                                </div>
-                            </div>
-
-                            <div class="pill-card">
-                                <div class="pill-icon db-icon"><i class="fa-solid fa-database"></i></div>
-                                <div>
-                                    <strong>MongoDB Database Isolation</strong>
-                                    <span>Every user account stays 100% private</span>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Top Centered Header -->
+                    <div class="auth-header-centered">
+                        <div class="app-logo-badge"><i class="fa-solid fa-plane-departure"></i></div>
+                        <h1>Split Group Trip Expenses</h1>
+                        <p>Calculate equal shares, log expenses on the road, and settle bills via WhatsApp.</p>
                     </div>
 
-                    <!-- Right Auth Form Card -->
-                    <div class="hero-right">
-                        <div class="auth-card modern-elevated-card">
-                            <div class="auth-card-header">
-                                <div class="brand-badge-mini"><i class="fa-solid fa-lock"></i> SECURE ACCESS</div>
-                                <h3>Welcome to TripSplit</h3>
-                                <p style="font-size:0.85rem; color:var(--text-muted);">Login or Signup to manage your group trips & history.</p>
-                            </div>
-
-                            <!-- Auth Tabs (Login vs Signup) -->
-                            <div class="auth-tabs segment-tabs">
-                                <button class="auth-tab active" id="tabLoginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
-                                <button class="auth-tab" id="tabSignupBtn"><i class="fa-solid fa-user-plus"></i> Signup / Register</button>
-                            </div>
-
-                            <!-- Login Form -->
-                            <form id="loginForm" class="auth-form-body">
-                                <div class="form-group icon-input-group">
-                                    <label for="loginEmail">Email Address *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-envelope field-icon"></i>
-                                        <input type="email" id="loginEmail" placeholder="e.g. rahul@gmail.com" required value="rahul@gmail.com">
-                                    </div>
-                                </div>
-                                <div class="form-group icon-input-group">
-                                    <label for="loginPassword">Password *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-lock field-icon"></i>
-                                        <input type="password" id="loginPassword" placeholder="••••••••" required value="123">
-                                    </div>
-                                </div>
-
-                                <!-- Professional Inline Error Message Container -->
-                                <div class="inline-error-box" id="loginInlineError" style="display:none;">
-                                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid Email or Password. Please try again.</span>
-                                </div>
-
-                                <button type="submit" class="btn btn-primary btn-block btn-hero-submit">
-                                    Login to Account <i class="fa-solid fa-arrow-right"></i>
-                                </button>
-                            </form>
-
-                            <!-- Signup Form -->
-                            <form id="signupForm" class="auth-form-body" style="display:none;">
-                                <div class="form-group icon-input-group">
-                                    <label for="signupName">Full Name *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-user field-icon"></i>
-                                        <input type="text" id="signupName" placeholder="e.g. Rahul Sharma" required>
-                                    </div>
-                                </div>
-                                <div class="form-group icon-input-group">
-                                    <label for="signupEmail">Email Address *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-envelope field-icon"></i>
-                                        <input type="email" id="signupEmail" placeholder="e.g. rahul@gmail.com" required>
-                                    </div>
-                                </div>
-                                <div class="form-group icon-input-group">
-                                    <label for="signupPhone">Mobile Number *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-phone field-icon"></i>
-                                        <input type="tel" id="signupPhone" placeholder="e.g. 9811122334" required>
-                                    </div>
-                                </div>
-                                <div class="form-group icon-input-group">
-                                    <label for="signupPassword">Password *</label>
-                                    <div class="input-wrapper">
-                                        <i class="fa-solid fa-key field-icon"></i>
-                                        <input type="password" id="signupPassword" placeholder="Create strong password" required>
-                                    </div>
-                                </div>
-
-                                <!-- Professional Inline Error/Success Box -->
-                                <div class="inline-error-box" id="signupInlineError" style="display:none;">
-                                    <i class="fa-solid fa-circle-exclamation"></i> <span id="signupErrorText">Account already exists!</span>
-                                </div>
-
-                                <button type="submit" class="btn btn-success btn-block btn-hero-submit">
-                                    Create Account <i class="fa-solid fa-user-check"></i>
-                                </button>
-                            </form>
+                    <!-- Centered Premium Auth Card -->
+                    <div class="centered-auth-card">
+                        
+                        <!-- Auth Segment Tabs -->
+                        <div class="segment-tab-bar">
+                            <button class="segment-btn active" id="tabLoginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+                            <button class="segment-btn" id="tabSignupBtn"><i class="fa-solid fa-user-plus"></i> Signup / Register</button>
                         </div>
+
+                        <!-- Login Form (BLANK INPUT VALUES) -->
+                        <form id="loginForm" class="auth-form-content">
+                            <div class="form-group icon-input-group">
+                                <label for="loginEmail">Email Address</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-envelope field-icon"></i>
+                                    <input type="email" id="loginEmail" placeholder="Enter your email address" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="loginPassword">Password</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-lock field-icon"></i>
+                                    <input type="password" id="loginPassword" placeholder="Enter your password" required value="">
+                                </div>
+                            </div>
+
+                            <!-- Professional Inline Error Container -->
+                            <div class="inline-error-box" id="loginInlineError" style="display:none;">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid Email or Password. Please try again.</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block btn-lg btn-auth-action">
+                                Login to Account <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </form>
+
+                        <!-- Signup Form -->
+                        <form id="signupForm" class="auth-form-content" style="display:none;">
+                            <div class="form-group icon-input-group">
+                                <label for="signupName">Full Name</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-user field-icon"></i>
+                                    <input type="text" id="signupName" placeholder="Enter your full name" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="signupEmail">Email Address</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-envelope field-icon"></i>
+                                    <input type="email" id="signupEmail" placeholder="Enter your email address" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="signupPhone">Mobile Number (WhatsApp)</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-phone field-icon"></i>
+                                    <input type="tel" id="signupPhone" placeholder="Enter 10-digit phone number" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="signupPassword">Password</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-key field-icon"></i>
+                                    <input type="password" id="signupPassword" placeholder="Create a password" required value="">
+                                </div>
+                            </div>
+
+                            <!-- Inline Error Container -->
+                            <div class="inline-error-box" id="signupInlineError" style="display:none;">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span id="signupErrorText">Account already exists!</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-block btn-lg btn-auth-action">
+                                Create Account <i class="fa-solid fa-user-check"></i>
+                            </button>
+                        </form>
+
+                        <div class="auth-card-footer">
+                            <i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> 🍃 MongoDB Database Connected & Encrypted
+                        </div>
+
                     </div>
 
                 </div>
