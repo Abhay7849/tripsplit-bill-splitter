@@ -17,6 +17,17 @@
     <!-- html2pdf.js for Formatted PDF Report Exports -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+    <!-- PWA Mobile App Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Note:', err));
+            });
+        }
+    </script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="clean-theme">
