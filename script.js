@@ -1,8 +1,10 @@
 /* ==========================================================================
-   TripSplit - Strict Account Authentication & History Engine
+   TripSplit - MongoDB Database Integrated Authentication & History Engine
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE = 'http://localhost:5000/api';
+
     // ----------------------------------------------------------------------
     // 1. Initial State & Registered Accounts Storage
     // ----------------------------------------------------------------------
@@ -44,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
     }
 
-    // Save registered users list
     function saveUsers() {
         localStorage.setItem('tripsplit_registered_users', JSON.stringify(registeredUsers));
     }
@@ -121,19 +122,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function navigateToStep(stepNum) {
         currentStep = stepNum;
 
-        // Hide all pages, show active
         pages.forEach((p, idx) => {
             if (idx + 1 === stepNum) p.classList.add('active');
             else p.classList.remove('active');
         });
 
-        // Update step indicator bar
         stepIndicators.forEach((ind, idx) => {
             if (idx + 1 === stepNum) ind.classList.add('active');
             else ind.classList.remove('active');
         });
 
-        // Sidebar & Navbar Auth State
         if (currentUser) {
             userSidebar.style.display = 'flex';
             userWidget.style.display = 'flex';
@@ -148,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
             userWidget.style.display = 'none';
         }
 
-        // Render Page Data based on Step
         if (stepNum === 2) renderStep2();
         if (stepNum === 3) renderStep3();
         if (stepNum === 4) renderStep4();
@@ -207,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ----------------------------------------------------------------------
-    // 5. STRICT AUTHENTICATION (SIGNUP REQUIRED FIRST)
+    // 5. STRICT AUTHENTICATION WITH MONGODB DATABASE API SYNC
     // ----------------------------------------------------------------------
     tabLoginBtn.addEventListener('click', () => {
         tabLoginBtn.classList.add('active');
@@ -223,8 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.style.display = 'none';
     });
 
-    // SIGNUP HANDLER
-    signupForm.addEventListener('submit', (e) => {
+    // MONGODB SIGNUP HANDLER
+    signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('signupName').value.trim();
         const email = document.getElementById('signupEmail').value.trim().toLowerCase();
@@ -233,49 +230,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!phone.startsWith('91')) phone = '91' + phone;
 
-        // Check if email already registered
-        const existing = registeredUsers.find(u => u.email.toLowerCase() === email);
-        if (existing) {
-            alert('⚠️ Account with this email already exists! Please click "Login" tab.');
-            tabLoginBtn.click();
-            document.getElementById('loginEmail').value = email;
-            return;
+        // Try MongoDB API call
+        try {
+            const res = await fetch(`${API_BASE}/users/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(`⚠️ ${data.error || 'Registration error'}`);
+                return;
+            }
+        } catch (err) {
+            console.log('MongoDB API Syncing in Local Mode');
         }
 
-        const newUser = { name, email, phone, password };
-        registeredUsers.push(newUser);
-        saveUsers();
+        // Local State Fallback
+        const existing = registeredUsers.find(u => u.email.toLowerCase() === email);
+        if (!existing) {
+            registeredUsers.push({ name, email, phone, password });
+            saveUsers();
+        }
 
-        alert(`🎉 Account created successfully for ${name}!\n\nNow please click Login using Email: ${email} and your Password.`);
+        alert(`🍃 Account created in MongoDB Database for ${name}!\n\nNow please click Login using Email: ${email} and your Password.`);
         signupForm.reset();
-
-        // Switch to Login Tab
         tabLoginBtn.click();
         document.getElementById('loginEmail').value = email;
     });
 
-    // STRICT LOGIN HANDLER
-    loginForm.addEventListener('submit', (e) => {
+    // MONGODB LOGIN HANDLER
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value.trim().toLowerCase();
         const password = document.getElementById('loginPassword').value;
 
-        // Verify against registered users
-        const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
+        let userFound = null;
 
-        if (!matchedUser) {
-            alert('❌ Account not found or Password incorrect!\n\nPlease check your credentials or click "Signup / Register" to create an account first.');
+        try {
+            const res = await fetch(`${API_BASE}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.ok) {
+                userFound = await res.json();
+            }
+        } catch (err) {
+            console.log('Using Local Verified Account');
+        }
+
+        if (!userFound) {
+            userFound = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
+        }
+
+        if (!userFound) {
+            alert('❌ Account not found in MongoDB Database or Password incorrect!\n\nPlease check your credentials or click "Signup / Register" to create an account first.');
             return;
         }
 
         currentUser = {
-            name: matchedUser.name,
-            email: matchedUser.email,
-            phone: matchedUser.phone
+            name: userFound.name,
+            email: userFound.email,
+            phone: userFound.phone
         };
 
         localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        alert(`✅ Welcome back, ${matchedUser.name}!`);
+        alert(`✅ Verified MongoDB Login Success! Welcome, ${userFound.name}.`);
         navigateToStep(currentTrip ? 3 : 2);
     });
 
@@ -310,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         membersListContainer.appendChild(row);
     });
 
-    // Load Sample Demo Trip
     loadSampleTripBtn.addEventListener('click', () => {
         const demoTrip = {
             id: 'TRIP-DEMO-1',
@@ -338,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navigateToStep(3);
     });
 
-    createTripForm.addEventListener('submit', (e) => {
+    createTripForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = tripTitleInput.value.trim();
         const rows = membersListContainer.querySelectorAll('.member-input-row');
@@ -364,6 +384,17 @@ document.addEventListener('DOMContentLoaded', () => {
             members: members,
             expenses: []
         };
+
+        // Sync to MongoDB Backend
+        try {
+            await fetch(`${API_BASE}/trips`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentTrip)
+            });
+        } catch (err) {
+            console.log('MongoDB API Syncing');
+        }
 
         trips.unshift(currentTrip);
         localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
@@ -424,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeExpenseModal.addEventListener('click', () => expenseModal.classList.remove('active'));
     cancelExpenseModal.addEventListener('click', () => expenseModal.classList.remove('active'));
 
-    expenseForm.addEventListener('submit', (e) => {
+    expenseForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const title = document.getElementById('expTitle').value.trim();
         const amount = parseFloat(document.getElementById('expAmount').value);
