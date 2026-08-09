@@ -14,6 +14,9 @@
     <!-- FontAwesome & WhatsApp Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- html2pdf.js for Formatted PDF Report Exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="clean-theme">
@@ -240,12 +243,15 @@
                             <span class="step-tag">STEP 4 OF 4</span>
                             <h2><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> Final Expense Calculation & Hisab</h2>
                         </div>
-                        <div style="display:flex; gap:10px;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-primary" id="downloadPdfBtn">
+                                <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                            </button>
                             <button class="btn btn-secondary" id="backToCreateTripFromStep4Btn">
                                 <i class="fa-solid fa-pen-to-square"></i> New / Edit Trip
                             </button>
                             <button class="btn btn-outline" id="backToExpensesBtn">
-                                <i class="fa-solid fa-arrow-left"></i> ← Back to Expenses Dashboard
+                                <i class="fa-solid fa-arrow-left"></i> ← Expenses Dashboard
                             </button>
                         </div>
                     </div>

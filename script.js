@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const transfersListGrid = document.getElementById('transfersListGrid');
     const backToExpensesBtn = document.getElementById('backToExpensesBtn');
     const backToCreateTripFromStep4Btn = document.getElementById('backToCreateTripFromStep4Btn');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
     // Modal: Add Expense
     const expenseModal = document.getElementById('expenseModal');
@@ -194,6 +195,150 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (backToCreateTripBtn) backToCreateTripBtn.addEventListener('click', () => navigateToStep(2));
     if (backToCreateTripFromStep4Btn) backToCreateTripFromStep4Btn.addEventListener('click', () => navigateToStep(2));
     if (backToExpensesBtn) backToExpensesBtn.addEventListener('click', () => navigateToStep(3));
+
+    // PDF Report Generator Event Listener
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', () => {
+            if (!currentTrip) return;
+
+            const totalExpense = currentTrip.expenses.reduce((sum, e) => sum + e.amount, 0);
+            const memberCount = currentTrip.members.length;
+            const perHead = memberCount > 0 ? totalExpense / memberCount : 0;
+
+            const memberStats = currentTrip.members.map(m => {
+                const spent = currentTrip.expenses
+                    .filter(e => e.payerId === m.id)
+                    .reduce((sum, e) => sum + e.amount, 0);
+                return {
+                    ...m,
+                    spent: spent,
+                    netBalance: spent - perHead
+                };
+            });
+
+            let creditors = memberStats.filter(m => m.netBalance > 0.01).map(m => ({ ...m }));
+            let debtors = memberStats.filter(m => m.netBalance < -0.01).map(m => ({ ...m, owes: Math.abs(m.netBalance) }));
+            let transfers = [];
+
+            debtors.forEach(d => {
+                let amountOwed = d.owes;
+                creditors.forEach(c => {
+                    if (amountOwed <= 0 || c.netBalance <= 0) return;
+                    let amt = Math.min(amountOwed, c.netBalance);
+                    amt = Math.round(amt);
+                    if (amt > 0) {
+                        transfers.push({
+                            debtorName: d.name,
+                            creditorName: c.name,
+                            creditorPhone: c.phone.replace(/^91/, ''),
+                            amount: amt
+                        });
+                        amountOwed -= amt;
+                        c.netBalance -= amt;
+                    }
+                });
+            });
+
+            // Create temporary styled HTML container for PDF
+            const pdfContainer = document.createElement('div');
+            pdfContainer.style.padding = '30px';
+            pdfContainer.style.fontFamily = "'Plus Jakarta Sans', Arial, sans-serif";
+            pdfContainer.style.color = '#0F172A';
+            pdfContainer.style.backgroundColor = '#FFFFFF';
+
+            pdfContainer.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #4F46E5; padding-bottom:15px; margin-bottom:20px;">
+                    <div>
+                        <h1 style="font-size:24px; color:#4F46E5; margin:0;">TripSplit Settlement Report</h1>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0;">Generated for <strong>${currentUser ? currentUser.name : 'User'}</strong> (${currentUser ? currentUser.email : ''}) on ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="background:#EEF2FF; color:#4F46E5; padding:6px 12px; border-radius:20px; font-weight:700; font-size:12px;">OFFICIAL REPORT</span>
+                    </div>
+                </div>
+
+                <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:15px; border-radius:10px; margin-bottom:20px; display:flex; justify-content:space-between;">
+                    <div>
+                        <span style="font-size:11px; color:#64748B; text-transform:uppercase;">Trip Name</span><br>
+                        <strong style="font-size:18px; color:#0F172A;">${currentTrip.title}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:11px; color:#64748B; text-transform:uppercase;">Total Expense</span><br>
+                        <strong style="font-size:18px; color:#4F46E5;">₹${totalExpense}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:11px; color:#64748B; text-transform:uppercase;">Members</span><br>
+                        <strong style="font-size:18px; color:#0F172A;">${memberCount} Friends</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:11px; color:#64748B; text-transform:uppercase;">Equal Per-Head Share</span><br>
+                        <strong style="font-size:18px; color:#10B981;">₹${Math.round(perHead)}</strong>
+                    </div>
+                </div>
+
+                <h3 style="font-size:15px; color:#0F172A; margin-bottom:10px; border-left:4px solid #4F46E5; padding-left:8px;">1. Kharche Ka Breakdown (Itemized Expenses)</h3>
+                <table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:12px;">
+                    <thead>
+                        <tr style="background:#F1F5F9; text-align:left;">
+                            <th style="padding:8px 12px; border:1px solid #CBD5E1;">Title</th>
+                            <th style="padding:8px 12px; border:1px solid #CBD5E1;">Kisne Pese Diye (Payer)</th>
+                            <th style="padding:8px 12px; border:1px solid #CBD5E1; text-align:right;">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${currentTrip.expenses.map(e => {
+                            const payer = currentTrip.members.find(m => m.id === e.payerId) || { name: 'Unknown' };
+                            return `
+                                <tr>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1;"><strong>${e.title}</strong></td>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1;">${payer.name}</td>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1; text-align:right;"><strong>₹${e.amount}</strong></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+
+                <h3 style="font-size:15px; color:#0F172A; margin-bottom:10px; border-left:4px solid #10B981; padding-left:8px;">2. Final Settlement Matrix (Kon Kisko Kitna Pesa Dega)</h3>
+                ${transfers.length === 0 ? '<p style="color:#10B981; font-weight:700;">All expenses are 100% equalized!</p>' : `
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:25px; font-size:12px;">
+                        <thead>
+                            <tr style="background:#F1F5F9; text-align:left;">
+                                <th style="padding:8px 12px; border:1px solid #CBD5E1;">Debtor (Kisiko Pese Dene Hain)</th>
+                                <th style="padding:8px 12px; border:1px solid #CBD5E1;">Creditor (Jisko Pese Milege)</th>
+                                <th style="padding:8px 12px; border:1px solid #CBD5E1;">Creditor Phone (Pay to Number)</th>
+                                <th style="padding:8px 12px; border:1px solid #CBD5E1; text-align:right;">Amount to Pay (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${transfers.map(tr => `
+                                <tr>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1; color:#EF4444; font-weight:700;">${tr.debtorName}</td>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1; color:#10B981; font-weight:700;">${tr.creditorName}</td>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1;">${tr.creditorPhone}</td>
+                                    <td style="padding:8px 12px; border:1px solid #CBD5E1; text-align:right; font-weight:800; font-size:13px; color:#4F46E5;">₹${tr.amount}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `}
+
+                <div style="margin-top:30px; border-top:1px solid #E2E8F0; padding-top:10px; text-align:center; font-size:10px; color:#94A3B8;">
+                    Verified & Generated by TripSplit Smart Engine • MongoDB Database Sync Active
+                </div>
+            `;
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `${currentTrip.title.replace(/\s+/g, '_')}_Settlement_Report.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(pdfContainer).save();
+        });
+    }
 
     function performLogout() {
         currentUser = null;
