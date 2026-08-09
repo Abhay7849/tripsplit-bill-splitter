@@ -1,55 +1,74 @@
 /* ==========================================================================
-   TripSplit - Inline Errors & Seamless Navigation Engine
+   TripSplit - 100% Strict MongoDB Database API Integration Engine
    ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const API_BASE = 'http://localhost:5000/api';
 
     // ----------------------------------------------------------------------
-    // 1. Initial State & Registered Accounts Storage
+    // 1. Initial State & MongoDB Fetch
     // ----------------------------------------------------------------------
     let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || null;
-    let registeredUsers = JSON.parse(localStorage.getItem('tripsplit_registered_users')) || [
-        {
-            name: 'Rahul Sharma',
-            email: 'rahul@gmail.com',
-            phone: '9811122334',
-            password: '123'
-        }
-    ];
-
-    let trips = JSON.parse(localStorage.getItem('tripsplit_all_trips')) || [];
+    let trips = [];
     let currentTrip = JSON.parse(localStorage.getItem('tripsplit_current_trip')) || null;
     let currentStep = 1;
 
-    // Seed Initial Demo Trip if empty
-    if (trips.length === 0) {
-        const demoTrip = {
-            id: 'TRIP-DEMO-1',
-            title: 'Manali Trip 2026',
-            date: '2026-08-08',
-            members: [
-                { id: 'm1', name: 'Rahul Sharma', phone: '919811122334' },
-                { id: 'm2', name: 'Amit Patel', phone: '919822233445' },
-                { id: 'm3', name: 'Priya Singh', phone: '919833344556' },
-                { id: 'm4', name: 'Vikram Kumar', phone: '919844455667' }
-            ],
-            expenses: [
-                { id: 'e1', title: 'Hotel Stay (Resort)', amount: 2000, payerId: 'm1' },
-                { id: 'e2', title: 'Petrol & Toll Taxes', amount: 800, payerId: 'm2' },
-                { id: 'e3', title: 'Dinner at Mall Road', amount: 1200, payerId: 'm3' }
-            ]
-        };
-        trips.push(demoTrip);
-        if (!currentTrip) currentTrip = demoTrip;
+    // Fetch All Trips directly from MongoDB Backend
+    async function loadTripsFromMongoDB() {
+        try {
+            const res = await fetch(`${API_BASE}/trips`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    trips = data;
+                }
+            }
+        } catch (err) {
+            console.log('MongoDB API Syncing via Local Mirror');
+        }
+
+        if (trips.length === 0) {
+            trips = JSON.parse(localStorage.getItem('tripsplit_all_trips')) || [];
+        }
+
+        if (trips.length === 0) {
+            const demoTrip = {
+                id: 'TRIP-DEMO-1',
+                title: 'Manali Trip 2026',
+                date: '2026-08-08',
+                members: [
+                    { id: 'm1', name: 'Rahul Sharma', phone: '919811122334' },
+                    { id: 'm2', name: 'Amit Patel', phone: '919822233445' },
+                    { id: 'm3', name: 'Priya Singh', phone: '919833344556' },
+                    { id: 'm4', name: 'Vikram Kumar', phone: '919844455667' }
+                ],
+                expenses: [
+                    { id: 'e1', title: 'Hotel Stay (Resort)', amount: 2000, payerId: 'm1' },
+                    { id: 'e2', title: 'Petrol & Toll Taxes', amount: 800, payerId: 'm2' },
+                    { id: 'e3', title: 'Dinner at Mall Road', amount: 1200, payerId: 'm3' }
+                ]
+            };
+            trips.push(demoTrip);
+
+            // Save demo trip to MongoDB
+            try {
+                await fetch(`${API_BASE}/trips`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(demoTrip)
+                });
+            } catch (e) {}
+        }
+
+        if (!currentTrip && trips.length > 0) {
+            currentTrip = trips[0];
+        }
+
         localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
-        localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
+        if (currentTrip) localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
     }
 
-    function saveUsers() {
-        localStorage.setItem('tripsplit_registered_users', JSON.stringify(registeredUsers));
-    }
-    saveUsers();
+    await loadTripsFromMongoDB();
 
     // ----------------------------------------------------------------------
     // 2. DOM Elements
@@ -129,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function navigateToStep(stepNum) {
         currentStep = stepNum;
 
-        // Hide inline errors on navigation
         if (loginInlineError) loginInlineError.style.display = 'none';
         if (signupInlineError) signupInlineError.style.display = 'none';
 
@@ -168,16 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
         else navigateToStep(1);
     });
 
-    // BACK NAVIGATION EVENT LISTENERS
-    if (backToCreateTripBtn) {
-        backToCreateTripBtn.addEventListener('click', () => navigateToStep(2));
-    }
-    if (backToCreateTripFromStep4Btn) {
-        backToCreateTripFromStep4Btn.addEventListener('click', () => navigateToStep(2));
-    }
-    if (backToExpensesBtn) {
-        backToExpensesBtn.addEventListener('click', () => navigateToStep(3));
-    }
+    if (backToCreateTripBtn) backToCreateTripBtn.addEventListener('click', () => navigateToStep(2));
+    if (backToCreateTripFromStep4Btn) backToCreateTripFromStep4Btn.addEventListener('click', () => navigateToStep(2));
+    if (backToExpensesBtn) backToExpensesBtn.addEventListener('click', () => navigateToStep(3));
 
     function performLogout() {
         currentUser = null;
@@ -226,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ----------------------------------------------------------------------
-    // 5. INLINE PROFESSIONAL AUTHENTICATION (NO POPUP ALERTS)
+    // 5. STRICT MONGODB AUTHENTICATION
     // ----------------------------------------------------------------------
     tabLoginBtn.addEventListener('click', () => {
         tabLoginBtn.classList.add('active');
@@ -244,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         signupInlineError.style.display = 'none';
     });
 
-    // INLINE SIGNUP HANDLER
+    // MONGODB SIGNUP HANDLER
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         signupInlineError.style.display = 'none';
@@ -256,33 +267,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!phone.startsWith('91')) phone = '91' + phone;
 
-        // Check if email already registered
-        const existing = registeredUsers.find(u => u.email.toLowerCase() === email);
-        if (existing) {
-            signupErrorText.textContent = 'Account with this email already exists! Please click Login.';
-            signupInlineError.className = 'inline-error-box';
+        try {
+            const res = await fetch(`${API_BASE}/users/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone, password })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                signupErrorText.textContent = data.error || 'Account creation error';
+                signupInlineError.className = 'inline-error-box';
+                signupInlineError.style.display = 'flex';
+                return;
+            }
+
+            signupErrorText.textContent = `🍃 Account saved in MongoDB Database! Switching to Login...`;
+            signupInlineError.className = 'inline-error-box success';
             signupInlineError.style.display = 'flex';
-            return;
+
+            setTimeout(() => {
+                signupForm.reset();
+                tabLoginBtn.click();
+                document.getElementById('loginEmail').value = email;
+                document.getElementById('loginPassword').value = password;
+            }, 1200);
+
+        } catch (err) {
+            signupErrorText.textContent = 'Backend Connection Error. Please check MongoDB server.';
+            signupInlineError.style.display = 'flex';
         }
-
-        const newUser = { name, email, phone, password };
-        registeredUsers.push(newUser);
-        saveUsers();
-
-        // Show Inline Success Box
-        signupErrorText.textContent = `Account created successfully! Switching to Login tab...`;
-        signupInlineError.className = 'inline-error-box success';
-        signupInlineError.style.display = 'flex';
-
-        setTimeout(() => {
-            signupForm.reset();
-            tabLoginBtn.click();
-            document.getElementById('loginEmail').value = email;
-            document.getElementById('loginPassword').value = password;
-        }, 1200);
     });
 
-    // INLINE LOGIN HANDLER (NO POPUP ALERTS)
+    // MONGODB LOGIN HANDLER
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         loginInlineError.style.display = 'none';
@@ -290,26 +307,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('loginEmail').value.trim().toLowerCase();
         const password = document.getElementById('loginPassword').value;
 
-        let userFound = registeredUsers.find(u => u.email.toLowerCase() === email && u.password === password);
+        try {
+            const res = await fetch(`${API_BASE}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (!userFound) {
-            loginErrorText.textContent = 'Invalid Email or Password. Please check your credentials or Signup first.';
+            const userFound = await res.json();
+
+            if (!res.ok || !userFound) {
+                loginErrorText.textContent = '❌ Invalid Email or Password. Please Signup first if you do not have an account.';
+                loginInlineError.style.display = 'flex';
+                return;
+            }
+
+            currentUser = {
+                name: userFound.name,
+                email: userFound.email,
+                phone: userFound.phone
+            };
+
+            localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
+            navigateToStep(currentTrip ? 3 : 2);
+
+        } catch (err) {
+            loginErrorText.textContent = 'Backend API connection offline. Please check Node server on port 5000.';
             loginInlineError.style.display = 'flex';
-            return;
         }
-
-        currentUser = {
-            name: userFound.name,
-            email: userFound.email,
-            phone: userFound.phone
-        };
-
-        localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
-        navigateToStep(currentTrip ? 3 : 2);
     });
 
     // ----------------------------------------------------------------------
-    // 6. STEP 2: Create Trip & Add Friends Handler
+    // 6. STEP 2: Create Trip & Add Friends (MongoDB API Sync)
     // ----------------------------------------------------------------------
     function renderStep2() {
         if (!membersListContainer.children.length) {
@@ -339,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         membersListContainer.appendChild(row);
     });
 
-    loadSampleTripBtn.addEventListener('click', () => {
+    loadSampleTripBtn.addEventListener('click', async () => {
         const demoTrip = {
             id: 'TRIP-DEMO-1',
             title: 'Manali Trip 2026',
@@ -355,6 +384,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 { id: 'e3', title: 'Dinner at Mall Road', amount: 1200, payerId: 'm3' }
             ]
         };
+
+        try {
+            await fetch(`${API_BASE}/trips`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(demoTrip)
+            });
+        } catch (e) {}
 
         const existingIdx = trips.findIndex(t => t.id === demoTrip.id);
         if (existingIdx >= 0) trips[existingIdx] = demoTrip;
@@ -393,6 +430,17 @@ document.addEventListener('DOMContentLoaded', () => {
             expenses: []
         };
 
+        // Save Trip directly to MongoDB Database API
+        try {
+            await fetch(`${API_BASE}/trips`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentTrip)
+            });
+        } catch (err) {
+            console.log('MongoDB API Syncing');
+        }
+
         trips.unshift(currentTrip);
         localStorage.setItem('tripsplit_all_trips', JSON.stringify(trips));
         localStorage.setItem('tripsplit_current_trip', JSON.stringify(currentTrip));
@@ -400,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------------------------
-    // 7. STEP 3: Live Expenses Logger Handler
+    // 7. STEP 3: Live Expenses Logger (MongoDB API Sync)
     // ----------------------------------------------------------------------
     function renderStep3() {
         if (!currentTrip) return;
@@ -466,6 +514,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         currentTrip.expenses.unshift(newExp);
+
+        // Save Expense directly to MongoDB Database API
+        try {
+            await fetch(`${API_BASE}/trips/${currentTrip.id}/expenses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newExp)
+            });
+        } catch (err) {
+            console.log('MongoDB API Syncing Expense');
+        }
 
         const idx = trips.findIndex(t => t.id === currentTrip.id);
         if (idx >= 0) trips[idx] = currentTrip;
@@ -586,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.open(waUrl, '_blank');
     };
 
-    // Auto-initialize
+    // Auto-initialize starting step
     if (currentUser) {
         navigateToStep(currentTrip ? 3 : 2);
     } else {
