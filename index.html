@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TripSplit - Group Trip Expense & WhatsApp Settlement Engine</title>
-    <meta name="description" content="Easy 4-step group trip expense manager with Password Auth, Saved Past Trips History, and Direct WhatsApp Settlement.">
+    <title>TripSplit - Group Trip Expense & WhatsApp Settlement</title>
+    <meta name="description" content="Simplify group trip expenses, calculate equal shares, and send 1-click WhatsApp payment links.">
     
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
 </head>
 <body class="clean-theme">
 
-    <!-- App Shell Grid Container (With Left History Sidebar when logged in) -->
+    <!-- App Shell Grid Container -->
     <div class="app-shell">
 
         <!-- 🏛️ LEFT USER DASHBOARD & PAST TRIPS HISTORY SIDEBAR -->
@@ -86,20 +86,12 @@
                 </div>
             </header>
 
-            <!-- STEP 1: LANDING & LOGIN / SIGNUP PAGE -->
+            <!-- STEP 1: CLEAN MINIMALIST & PROFESSIONAL FIRST PAGE -->
             <section class="page-view active" id="pageStep1">
                 <div class="container hero-login-container">
                     <div class="hero-left">
-                        <span class="pill-badge"><i class="fa-solid fa-lock"></i> Secure Password Authentication</span>
-                        <h1>Group Trip Expense & <span>WhatsApp Settlement App</span></h1>
-                        <p>Login or Signup to save your trips history. Log expenses on the road, calculate equal shares, and send direct WhatsApp settlement messages to friends!</p>
-                        
-                        <div class="feature-bullets">
-                            <div><i class="fa-solid fa-check-circle"></i> ID & Password Secure Auth</div>
-                            <div><i class="fa-solid fa-check-circle"></i> Left Sidebar Past Trips History</div>
-                            <div><i class="fa-solid fa-check-circle"></i> Saved Expenses & Who Paid What</div>
-                            <div><i class="fa-brands fa-whatsapp"></i> Direct WhatsApp Messages with Numbers</div>
-                        </div>
+                        <h1>Split Trip Expenses & <span>Settle Instantly on WhatsApp</span></h1>
+                        <p>Log expenses on the go, auto-calculate equal shares, and send 1-click WhatsApp payment links to friends.</p>
                     </div>
 
                     <div class="hero-right">
@@ -113,16 +105,16 @@
                             <!-- Login Form -->
                             <form id="loginForm" class="auth-form-body">
                                 <div class="form-group">
-                                    <label for="loginEmail">Email / User ID *</label>
+                                    <label for="loginEmail">Email Address *</label>
                                     <input type="email" id="loginEmail" placeholder="e.g. rahul@gmail.com" required value="rahul@gmail.com">
                                 </div>
                                 <div class="form-group">
                                     <label for="loginPassword">Password *</label>
-                                    <input type="password" id="loginPassword" placeholder="••••••••" required value="123456">
+                                    <input type="password" id="loginPassword" placeholder="••••••••" required value="123">
                                 </div>
 
                                 <button type="submit" class="btn btn-primary btn-block">
-                                    Login to Account <i class="fa-solid fa-right-to-bracket"></i>
+                                    Login to Account <i class="fa-solid fa-arrow-right"></i>
                                 </button>
                             </form>
 
@@ -133,7 +125,7 @@
                                     <input type="text" id="signupName" placeholder="e.g. Rahul Sharma" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="signupEmail">Email / User ID *</label>
+                                    <label for="signupEmail">Email Address *</label>
                                     <input type="email" id="signupEmail" placeholder="e.g. rahul@gmail.com" required>
                                 </div>
                                 <div class="form-group">
@@ -146,7 +138,7 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-success btn-block">
-                                    Create Account & Continue <i class="fa-solid fa-user-check"></i>
+                                    Create Account <i class="fa-solid fa-user-check"></i>
                                 </button>
                             </form>
                         </div>
@@ -216,7 +208,7 @@
 
                     <div class="expenses-summary-card">
                         <h3><i class="fa-solid fa-receipt"></i> Raste Me Hue Kharche (Saved Expenses)</h3>
-                        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein. Sabhi kharcha history me save ho raha hai.</p>
+                        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein. Sabhi kharcha MongoDB DB me save ho raha hai.</p>
 
                         <div class="expenses-table-wrapper" id="expensesTableWrapper">
                             <!-- Dynamic Expenses Table -->
