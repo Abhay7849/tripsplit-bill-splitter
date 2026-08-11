@@ -8,7 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------------
     // 1. Initial State & User Isolation Storage
     // ----------------------------------------------------------------------
-    let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || null;
+    let currentUser = JSON.parse(localStorage.getItem('tripsplit_user')) || {
+        name: 'Rahul Sharma',
+        email: 'rahul@gmail.com',
+        phone: '9811122334'
+    };
+    localStorage.setItem('tripsplit_user', JSON.stringify(currentUser));
+
     let registeredUsers = JSON.parse(localStorage.getItem('tripsplit_registered_users')) || [
         {
             name: 'Rahul Sharma',
