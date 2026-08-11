@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripSplit - Group Trip Expense & WhatsApp Settlement</title>
+    <meta name="description" content="Simplify group trip expenses, calculate equal shares, and send 1-click WhatsApp payment links.">
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome & WhatsApp Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- html2pdf.js for Formatted PDF Report Exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Disable Browser Cache for Instant Live UI Updates -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <link rel="stylesheet" href="style.css?v=3.0.0">
+</head>
+<body class="clean-theme">
+
+    <!-- App Shell Grid Container -->
+    <div class="app-shell">
+
+        <!-- 🏛️ LEFT USER DASHBOARD & PAST TRIPS HISTORY SIDEBAR -->
+        <aside class="user-history-sidebar" id="userSidebar" style="display:none;">
+            <div class="sidebar-header">
+                <div class="brand-logo-sm">
+                    <div class="brand-icon-sm"><i class="fa-solid fa-plane-departure"></i></div>
+                    <span class="brand-name-sm">Trip<strong>Split</strong></span>
+                </div>
+            </div>
+
+            <!-- User Profile Card -->
+            <div class="user-profile-card">
+                <div class="avatar-circle" id="userAvatar">R</div>
+                <div>
+                    <strong class="user-name-text" id="sidebarUserName">Rahul Sharma</strong>
+                    <span class="user-email-text" id="sidebarUserEmail">rahul@gmail.com</span>
+                </div>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <!-- Past Trips History List -->
+            <div class="sidebar-section">
+                <div class="section-flex-title">
+                    <span class="menu-label">SAVED PAST TRIPS</span>
+                    <button class="btn-sm-add" id="sidebarNewTripBtn" title="Create New Trip"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="past-trips-list" id="pastTripsList">
+                    <!-- Dynamic Past Trips Rendered Here -->
+                </div>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <button class="btn btn-logout-sidebar" id="sidebarLogoutBtn">
+                <i class="fa-solid fa-power-off"></i> Logout Account
+            </button>
+        </aside>
+
+        <!-- 🖥️ MAIN CANVAS WRAPPER -->
+        <div class="main-canvas-wrapper">
+
+            <!-- Header Navbar -->
+            <header class="app-navbar">
+                <div class="container nav-container">
+                    <a href="#" class="brand-logo" id="navLogoBtn">
+                        <div class="brand-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                        <span class="brand-name">Trip<strong>Split</strong></span>
+                    </a>
+
+                    <!-- Step Progress Indicator -->
+                    <div class="step-indicator-bar" id="stepIndicator">
+                        <div class="step-item active" id="stepIndicator1"><span class="step-num">1</span> Auth</div>
+                        <div class="step-item" id="stepIndicator2"><span class="step-num">2</span> Create Trip</div>
+                        <div class="step-item" id="stepIndicator3"><span class="step-num">3</span> Add Expenses</div>
+                        <div class="step-item" id="stepIndicator4"><span class="step-num">4</span> Calculate & Settle</div>
+                    </div>
+
+                    <div class="user-profile-widget" id="userWidget" style="display:none;">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span id="navUserName">Rahul</span>
+                        <button class="btn-logout" id="logoutBtn" title="Logout"><i class="fa-solid fa-power-off"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- STEP 1: CLEAN & ELEGANT CENTERED PREMIUM AUTH PAGE -->
+            <section class="page-view active" id="pageStep1">
+                <div class="container centered-auth-wrapper">
+                    
+                    <!-- Top Centered Header -->
+                    <div class="auth-header-centered">
+                        <div class="app-logo-badge"><i class="fa-solid fa-plane-departure"></i></div>
+                        <h1>Split Group Trip Expenses</h1>
+                        <p>Calculate equal shares, log expenses on the road, and settle bills via WhatsApp.</p>
+                    </div>
+
+                    <!-- Centered Premium Auth Card -->
+                    <div class="centered-auth-card">
+                        
+                        <!-- Auth Segment Tabs -->
+                        <div class="segment-tab-bar">
+                            <button class="segment-btn active" id="tabLoginBtn"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+                            <button class="segment-btn" id="tabSignupBtn"><i class="fa-solid fa-user-plus"></i> Signup / Register</button>
+                        </div>
+
+                        <!-- Login Form (BLANK INPUT VALUES) -->
+                        <form id="loginForm" class="auth-form-content">
+                            <div class="form-group icon-input-group">
+                                <label for="loginEmail">Email Address</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-envelope field-icon"></i>
+                                    <input type="email" id="loginEmail" placeholder="Enter your email address" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="loginPassword">Password</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-lock field-icon"></i>
+                                    <input type="password" id="loginPassword" placeholder="Enter your password" required value="">
+                                </div>
+                            </div>
+
+                            <!-- Professional Inline Error Container -->
+                            <div class="inline-error-box" id="loginInlineError" style="display:none;">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid Email or Password. Please try again.</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block btn-lg btn-auth-action">
+                                Login to Account <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </form>
+
+                        <!-- Signup Form -->
+                        <form id="signupForm" class="auth-form-content" style="display:none;">
+                            <div class="form-group icon-input-group">
+                                <label for="signupName">Full Name</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-user field-icon"></i>
+                                    <input type="text" id="signupName" placeholder="Enter your full name" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="signupEmail">Email Address</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-envelope field-icon"></i>
+                                    <input type="email" id="signupEmail" placeholder="Enter your email address" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="signupPhone">Mobile Number (WhatsApp)</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-phone field-icon"></i>
+                                    <input type="tel" id="signupPhone" placeholder="Enter 10-digit phone number" required value="">
+                                </div>
+                            </div>
+
+                            <div class="form-group icon-input-group">
+                                <label for="signupPassword">Password</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-key field-icon"></i>
+                                    <input type="password" id="signupPassword" placeholder="Create a password" required value="">
+                                </div>
+                            </div>
+
+                            <!-- Inline Error Container -->
+                            <div class="inline-error-box" id="signupInlineError" style="display:none;">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span id="signupErrorText">Account already exists!</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-block btn-lg btn-auth-action">
+                                Create Account <i class="fa-solid fa-user-check"></i>
+                            </button>
+                        </form>
+
+                        <div class="auth-card-footer">
+                            <i class="fa-solid fa-shield-halved" style="color:var(--success);"></i> 🍃 MongoDB Database Connected & Encrypted
+                        </div>
+
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- STEP 2: CREATE TRIP PAGE -->
+            <section class="page-view" id="pageStep2">
+                <div class="container page-container">
+                    <div class="card-box main-card">
+                        <div class="card-header-flex">
+                            <div>
+                                <span class="step-tag">STEP 2 OF 4</span>
+                                <h2><i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i> Create New Trip & Add Friends</h2>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="loadSampleTripBtn">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Load Demo Past Trip
+                            </button>
+                        </div>
+
+                        <form id="createTripForm">
+                            <div class="form-group">
+                                <label for="tripTitle">Trip Name *</label>
+                                <input type="text" id="tripTitle" placeholder="e.g. Manali Trip 2026, Goa Vacation" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Friends Joining the Trip (Name & Mobile Number) *</label>
+                                <div id="membersListContainer" class="members-input-list">
+                                    <!-- Dynamic Member Input Rows -->
+                                </div>
+
+                                <button type="button" class="btn btn-outline btn-sm" id="addFriendRowBtn" style="margin-top:12px;">
+                                    <i class="fa-solid fa-user-plus"></i> + Add Another Friend
+                                </button>
+                            </div>
+
+                            <div class="form-actions-flex">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Save Trip & Start Logging Expenses <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 3: RASTE KA KHARCHA (EXPENSE LOGGER) PAGE -->
+            <section class="page-view" id="pageStep3">
+                <div class="container page-container">
+                    
+                    <div class="trip-title-banner">
+                        <div>
+                            <span class="sub-label">ACTIVE TRIP</span>
+                            <h2 id="activeTripTitleDisplay">Manali Trip 2026</h2>
+                        </div>
+                        <div class="trip-header-actions">
+                            <button class="btn btn-secondary" id="backToCreateTripBtn">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit / New Trip
+                            </button>
+                            <button class="btn btn-outline" id="openAddExpenseModalBtn">
+                                <i class="fa-solid fa-plus-circle"></i> + Add Expense
+                            </button>
+                            <button class="btn btn-success btn-lg" id="gotoCalculateBtn">
+                                <i class="fa-solid fa-calculator"></i> Calculate Final Settlement <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="expenses-summary-card">
+                        <h3><i class="fa-solid fa-receipt"></i> Raste Me Hue Kharche (Saved Expenses)</h3>
+                        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:20px;">Raste me jo friend jitna kharcha kar raha hai, yahan update karte jayein.</p>
+
+                        <div class="expenses-table-wrapper" id="expensesTableWrapper">
+                            <!-- Dynamic Expenses Table -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- STEP 4: CALCULATE & FINAL SETTLEMENT PAGE -->
+            <section class="page-view" id="pageStep4">
+                <div class="container page-container">
+                    
+                    <div class="settlement-header-banner">
+                        <div>
+                            <span class="step-tag">STEP 4 OF 4</span>
+                            <h2><i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i> Final Expense Calculation & Hisab</h2>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-primary" id="downloadPdfBtn">
+                                <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                            </button>
+                            <button class="btn btn-secondary" id="backToCreateTripFromStep4Btn">
+                                <i class="fa-solid fa-pen-to-square"></i> New / Edit Trip
+                            </button>
+                            <button class="btn btn-outline" id="backToExpensesBtn">
+                                <i class="fa-solid fa-arrow-left"></i> ← Expenses Dashboard
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="calc-stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-label">Total Trip Expense</span>
+                            <strong class="stat-value" id="calcTotalExpense">₹4,000</strong>
+                        </div>
+
+                        <div class="stat-box">
+                            <span class="stat-label">Total Friends</span>
+                            <strong class="stat-value" id="calcTotalFriends">4 Members</strong>
+                        </div>
+
+                        <div class="stat-box highlight">
+                            <span class="stat-label">Equal Per-Head Share</span>
+                            <strong class="stat-value" id="calcPerHeadShare">₹1,000 / person</strong>
+                        </div>
+                    </div>
+
+                    <div class="card-box" style="margin-bottom:30px;">
+                        <h3><i class="fa-solid fa-users"></i> Kisne Kitna Kharcha Kiya (Individual Spent Summary)</h3>
+                        <div class="spent-breakdown-grid" id="spentBreakdownGrid">
+                            <!-- Dynamic Member Spent Cards -->
+                        </div>
+                    </div>
+
+                    <div class="card-box settlement-results-card">
+                        <div class="card-title-badge">
+                            <h3><i class="fa-brands fa-whatsapp" style="color:#25D366;"></i> Final Settlement: Kon Kisko Kitna Pesa Dega</h3>
+                            <p style="font-size:0.88rem; color:var(--text-muted);">Direct WhatsApp message button par click karein ke pre-filled message bhej sakein!</p>
+                        </div>
+
+                        <div class="transfers-list-grid" id="transfersListGrid">
+                            <!-- Dynamic Transfer Cards -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+        <!-- END MAIN CANVAS -->
+
+    </div>
+    <!-- END APP SHELL -->
+
+    <!-- Modal: Add Expense Modal -->
+    <div class="modal-overlay" id="expenseModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-receipt"></i> Raste Ka Kharcha Add Karein</h3>
+                <button class="modal-close-btn" id="closeExpenseModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="expenseForm" class="modal-form">
+                <div class="form-group">
+                    <label for="expTitle">Kharche Ka Title *</label>
+                    <input type="text" id="expTitle" placeholder="e.g. Hotel Stay, Petrol / Fuel, Dinner, Tea & Snacks" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="expAmount">Kitna Pesa Kharcha Hua (₹) *</label>
+                    <input type="number" id="expAmount" placeholder="e.g. 2000" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="expPayer">Kisne Pese Diye (Payer)? *</label>
+                    <select id="expPayer" required>
+                        <!-- Dynamic Options -->
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelExpenseModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js?v=5.0.0"></script>
+</body>
+</html>
