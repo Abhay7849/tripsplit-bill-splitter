@@ -413,43 +413,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!phone.startsWith('91')) phone = '91' + phone;
 
-        try {
-            const res = await fetch(`${API_BASE}/users/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone, password })
-            });
+        let mongodbSuccess = false;
 
-            if (res.ok) {
-                signupErrorText.textContent = `🍃 Account created in MongoDB! Switching to Login...`;
-                signupInlineError.className = 'inline-error-box success';
-                signupInlineError.style.display = 'flex';
+        // Only call localhost API if running directly on localhost HTTP to avoid HTTPS Mixed Content blocks
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            try {
+                const res = await fetch(`${API_BASE}/users/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, phone, password })
+                });
 
-                setTimeout(() => {
-                    signupForm.reset();
-                    tabLoginBtn.click();
-                    document.getElementById('loginEmail').value = email;
-                    document.getElementById('loginPassword').value = password;
-                }, 1200);
-                return;
+                if (res.ok) mongodbSuccess = true;
+            } catch (err) {
+                console.log('Local MongoDB offline');
             }
-        } catch (err) {
-            console.log('Backend Sync Offline - Saving Local Account');
         }
 
-        // Hybrid Fallback: Save Account Locally if Backend is Offline (e.g. GitHub Pages)
+        // Check if user already exists
         const existingUser = registeredUsers.find(u => u.email.toLowerCase() === email);
-        if (existingUser) {
+        if (existingUser && !mongodbSuccess) {
             signupErrorText.textContent = '❌ Account with this Email already exists! Please Login.';
             signupInlineError.className = 'inline-error-box';
             signupInlineError.style.display = 'flex';
             return;
         }
 
-        registeredUsers.push({ name, email, phone, password });
-        saveUsers();
+        if (!existingUser) {
+            registeredUsers.push({ name, email, phone, password });
+            saveUsers();
+        }
 
-        signupErrorText.textContent = `✅ Account Created Successfully! Switching to Login...`;
+        signupErrorText.textContent = mongodbSuccess 
+            ? `🍃 Account created in MongoDB! Switching to Login...`
+            : `✅ Account Created Successfully! Switching to Login...`;
+
         signupInlineError.className = 'inline-error-box success';
         signupInlineError.style.display = 'flex';
 
@@ -470,18 +468,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let userFound = null;
 
-        try {
-            const res = await fetch(`${API_BASE}/users/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            try {
+                const res = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-            if (res.ok) {
-                userFound = await res.json();
+                if (res.ok) userFound = await res.json();
+            } catch (err) {
+                console.log('Using Local Account');
             }
-        } catch (err) {
-            console.log('Using Local Account');
         }
 
         if (!userFound) {
@@ -490,6 +488,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!userFound) {
             loginErrorText.textContent = '❌ Invalid Email or Password. Please Signup first if you do not have an account.';
+            loginInlineError.className = 'inline-error-box';
             loginInlineError.style.display = 'flex';
             return;
         }
