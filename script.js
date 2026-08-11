@@ -420,29 +420,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({ name, email, phone, password })
             });
 
-            const data = await res.json();
-            if (!res.ok) {
-                signupErrorText.textContent = data.error || 'Account creation error';
-                signupInlineError.className = 'inline-error-box';
+            if (res.ok) {
+                signupErrorText.textContent = `🍃 Account created in MongoDB! Switching to Login...`;
+                signupInlineError.className = 'inline-error-box success';
                 signupInlineError.style.display = 'flex';
+
+                setTimeout(() => {
+                    signupForm.reset();
+                    tabLoginBtn.click();
+                    document.getElementById('loginEmail').value = email;
+                    document.getElementById('loginPassword').value = password;
+                }, 1200);
                 return;
             }
-
-            signupErrorText.textContent = `🍃 Account created in MongoDB! Switching to Login...`;
-            signupInlineError.className = 'inline-error-box success';
-            signupInlineError.style.display = 'flex';
-
-            setTimeout(() => {
-                signupForm.reset();
-                tabLoginBtn.click();
-                document.getElementById('loginEmail').value = email;
-                document.getElementById('loginPassword').value = password;
-            }, 1200);
-
         } catch (err) {
-            signupErrorText.textContent = 'Backend Connection Error. Please check server.';
-            signupInlineError.style.display = 'flex';
+            console.log('Backend Sync Offline - Saving Local Account');
         }
+
+        // Hybrid Fallback: Save Account Locally if Backend is Offline (e.g. GitHub Pages)
+        const existingUser = registeredUsers.find(u => u.email.toLowerCase() === email);
+        if (existingUser) {
+            signupErrorText.textContent = '❌ Account with this Email already exists! Please Login.';
+            signupInlineError.className = 'inline-error-box';
+            signupInlineError.style.display = 'flex';
+            return;
+        }
+
+        registeredUsers.push({ name, email, phone, password });
+        saveUsers();
+
+        signupErrorText.textContent = `✅ Account Created Successfully! Switching to Login...`;
+        signupInlineError.className = 'inline-error-box success';
+        signupInlineError.style.display = 'flex';
+
+        setTimeout(() => {
+            signupForm.reset();
+            tabLoginBtn.click();
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+        }, 1200);
     });
 
     loginForm.addEventListener('submit', async (e) => {
